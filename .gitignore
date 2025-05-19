@@ -9,6 +9,7 @@ yolov5
 *.zip
 
 report/proposal.*
+report/*.log
 !report/proposal.pdf
 !report/proposal.tex
 !report/proposal.pdf

@@ -32,11 +32,11 @@
 	University of Padua\\
 	%% examples of more authors
 	\And
-	{\hspace{1mm}Zoren Martinez} \\
+	{\hspace{1mm}Zoren Martinez 2123873} \\
 	Department of Computer Engineering\\
 	University of Padua\\
 	\And
-	{\hspace{1mm}Francesco Pivotto} \\
+	{\hspace{1mm}Francesco Pivotto 2158296} \\
 	Department of Computer Engineering\\
 	University of Padua\\
 }
@@ -129,6 +129,21 @@ This color-coded visualization enhances transparency and provides immediate visu
     \centering
     \begin{minipage}{0.45\textwidth}
         \centering
+        \includegraphics[width=\linewidth]{./assets/2C40.jpg}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{./assets/AD48.jpg}
+    \end{minipage}
+	\caption{Sample images}
+    \label{fig:fig1}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
         \includegraphics[width=\linewidth]{./assets/example_default.png}
         \caption{(a) Base image}
     \end{minipage}
@@ -138,7 +153,7 @@ This color-coded visualization enhances transparency and provides immediate visu
         \includegraphics[width=\linewidth]{./assets/example_detected.png}
         \caption{(b) Detection output}
     \end{minipage}
-    \label{fig:fig1}
+    \label{fig:fig2}
 \end{figure}
 
 \section*{Dataset and Real-World Data Sources}
@@ -164,6 +179,13 @@ To ensure the reliability and practicality of the proposed card counting detecti
 The first layer of performance measurement involves evaluating how accurately the system detects and classifies individual playing cards:
 
 \begin{itemize}
+	\item The mean Average Precision (mAP);
+	\item The mean Intersection over Union (mIoU);
+\end{itemize}
+
+In case some machine learning models are developed we are going to use these metrics too: 
+
+\begin{itemize}
 	\item Precision and Recall: These will be measured to assess the system’s ability to correctly identify cards (true positives) while minimizing false detections.
 	\item F1-Score: A harmonic mean of precision and recall to provide a balanced evaluation metric.
 	\item Confusion Matrix: To visualize misclassifications across different card types and values.
@@ -176,13 +198,13 @@ Testing will be performed on:
 	\item Frames extracted from real gameplay videos, where ground truth labels are manually annotated for evaluation purposes.
 \end{itemize}
 
-\subsection*{Accuracy of Card Counting Logic}
-
-The system’s ability to maintain an accurate running count will be verified by comparing its output with manually computed counts based on recorded game sessions. Metrics include:
-
-Running Count Error Rate: Average deviation of the system's count from the ground truth over time.
-
-Event-Based Accuracy: Correct detection of count transitions (e.g., from neutral to positive count, or negative to neutral).
+%\subsection*{Accuracy of Card Counting Logic}
+%
+%The system’s ability to maintain an accurate running count will be verified by comparing its output with manually computed counts based on recorded game sessions. Metrics include:
+%
+%Running Count Error Rate: Average deviation of the system's count from the ground truth over time.
+%
+%Event-Based Accuracy: Correct detection of count transitions (e.g., from neutral to positive count, or negative to neutral).
 
 \nocite{*}
 

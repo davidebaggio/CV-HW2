@@ -47,16 +47,16 @@ std::string get_filename(std::string path)
 int main()
 {
 	std::vector<std::string> images_paths;
-	images_paths.push_back("./data/example_default.png");
-	// cv::glob("./data/Images/Images/*.jpg", images_paths);
+	// images_paths.push_back("./data/example_default.png");
+	cv::glob("./data/Images/Images/*.jpg", images_paths);
 
 	cv::namedWindow("Card", cv::WINDOW_NORMAL);
 
 	for (size_t i = 0; i < images_paths.size(); i++)
 	{
 		std::string image_file = images_paths[i];
-		/* std::string xml_file = "./data/Annotations/Annotations/" + get_filename(image_file) + ".xml";
-		BoundingBox box = parseVOC(xml_file); */
+		std::string xml_file = "./data/Annotations/Annotations/" + get_filename(image_file) + ".xml";
+		BoundingBox box = parseVOC(xml_file);
 		cv::Mat img = cv::imread(image_file, cv::IMREAD_COLOR);
 		if (img.empty())
 		{
@@ -82,15 +82,16 @@ int main()
 
 			if (approx.size() >= 3 && approx.size() <= 4 && cv::isContourConvex(approx))
 			{
-				cv::polylines(img, approx, true, cv::Scalar(0, 255, 0), 2);
+				cv::polylines(img, approx, true, cv::Scalar(0, 255, 0), 5);
 			}
 		}
 
-		/* // Draw bounding box
-		cv::rectangle(img, cv::Point(box.xmin, box.ymin), cv::Point(box.xmax, box.ymax), cv::Scalar(0, 255, 0), 3);
+		// Draw bounding box
+		cv::rectangle(img, cv::Point(box.xmin, box.ymin), cv::Point(box.xmax, box.ymax), cv::Scalar(0, 0, 255), 3);
 		cv::putText(img, box.className, cv::Point(box.xmin, box.ymin - 30), cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(255, 0, 0), 10);
-		*/
-		// cv::resize(img, img, cv::Size(800, 600));
+
+		cv::resize(img, img, cv::Size(800, 600));
+		cv::resize(thresh, thresh, cv::Size(800, 600));
 		cv::imshow("Card", thresh);
 		cv::waitKey(0);
 		cv::imshow("Card", img);
