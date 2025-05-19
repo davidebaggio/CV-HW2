@@ -1,0 +1,12 @@
+.vscode
+
+data
+
+build
+
+*.zip
+
+report/proposal.*
+!report/proposal.pdf
+!report/proposal.tex
+!report/proposal.pdf
