@@ -1,8 +1,10 @@
 .vscode
 
-data
+data*
 
 build
+
+yolov5
 
 *.zip
 
