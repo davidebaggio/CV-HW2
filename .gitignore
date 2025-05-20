@@ -8,6 +8,8 @@ yolov5
 
 *.zip
 
+venv
+
 report/proposal.*
 report/*.log
 !report/proposal.pdf
