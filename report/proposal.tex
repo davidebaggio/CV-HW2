@@ -197,6 +197,45 @@ Testing will be performed on:
 	\item Held-out images from the annotated dataset (to test generalization).
 	\item Frames extracted from real gameplay videos, where ground truth labels are manually annotated for evaluation purposes.
 \end{itemize}
+\newpage
+\section*{Post-Feedback Clarifications and Additions}
+
+\subsection*{Handling Occlusions}
+
+Occlusions can be a significant challenge, particularly due to players’ hands or overlapping cards. We plan to address these cases with two strategies:
+
+\begin{itemize}
+    \item \textbf{Short-term occlusions (e.g., by hands)} will be handled using temporal tracking techniques. The key idea is to retain memory of previous frames: if a card was clearly visible at a certain position before the occlusion, and something now covers that same area, we can reasonably assume (within a short time window) that the card is still there. Thus, we will maintain a short history buffer to preserve card positions through minor occlusions.
+    
+    \item \textbf{Occlusions between cards} are more complex. In such cases, we aim to estimate the full extent of a partially visible card by analyzing the visible portion (i.e., the suit and rank). Based on the size and position of these features, we will infer the probable dimensions and orientation of the complete card, projecting the likely full bounding box even if the card is partially covered by another.
+\end{itemize}
+
+\subsection*{Annotation Strategy}
+
+Our evaluation pipeline involves two types of data sources:
+
+\begin{itemize}
+    \item A subset of the \textit{Complete Playing Card Dataset} from Kaggle, which contains isolated card images without blackjack context. This dataset already includes full annotations, which we will use to evaluate basic card detection accuracy in controlled conditions.
+    
+    \item Real-world gameplay videos sourced from YouTube. For this data, we will manually annotate selected frames with bounding boxes and corresponding Hi-Lo values. Due to the manual nature of this process, we will limit the number of annotated frames and avoid using excessively long video sequences.
+\end{itemize}
+
+Each bounding box will be labeled according to the Hi-Lo counting value of the card: $+1$, $0$, or $-1$.
+
+\subsection*{Addition of Accuracy Metric}
+
+As suggested, we will include \textbf{accuracy} among the evaluation metrics to better assess the relationship between true positives and the total number of detections. Accuracy will be calculated using the standard formula:
+
+\[
+\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+\]
+
+where $TP$ = True Positives, $TN$ = True Negatives, $FP$ = False Positives, and $FN$ = False Negatives.
+
+\subsection*{Test Data Variability}
+
+To assess robustness, we plan to test the system on gameplay videos with varying backgrounds (e.g., different table colors). However, we were not able to find suitable videos from multiple viewpoints. Despite this, we will strive to select videos with realistic variability in lighting and card layout conditions to simulate diverse gameplay environments as closely as possible.
+
 
 %\subsection*{Accuracy of Card Counting Logic}
 %
