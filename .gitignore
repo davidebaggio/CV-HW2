@@ -5,9 +5,10 @@ data*
 build
 
 yolov5
+yolov8*
 
 *.zip
-
+*.mp4
 venv
 
 report/proposal.*
