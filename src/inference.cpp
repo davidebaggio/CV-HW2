@@ -6,8 +6,8 @@ using namespace cv;
 using namespace dnn;
 using namespace std;
 
-const float CONFIDENCE_THRESHOLD = 0.4;
-const float NMS_THRESHOLD = 0.5;
+const float CONFIDENCE_THRESHOLD = 0.0;
+const float NMS_THRESHOLD = 1.0;
 const int INPUT_WIDTH = 640;
 const int INPUT_HEIGHT = 640;
 
@@ -27,9 +27,9 @@ int main(int argc, char const *argv[])
 	net.setPreferableTarget(DNN_TARGET_CPU);
 
 	// Mat image = imread("./data/example_default.png");
-	Mat image = imread("./data/Images/Images/2C0.jpg");
-	// resize(image, image, Size(INPUT_WIDTH, INPUT_HEIGHT));
-	Mat blob = blobFromImage(image, 1.0, Size(INPUT_WIDTH, INPUT_HEIGHT), Scalar(), true, false);
+	Mat image = imread("./data/images/train/2C19.jpg");
+
+	Mat blob = blobFromImage(image, 1 / 255.0, Size(INPUT_WIDTH, INPUT_HEIGHT), Scalar(), true, false);
 	net.setInput(blob);
 
 	vector<Mat> outputs;
@@ -59,6 +59,8 @@ int main(int argc, char const *argv[])
 		classIds.push_back(classId);
 		confidences.push_back(conf);
 		boxes.emplace_back(left, top, (int)w, (int)h);
+
+		cout << "Class ID: " << classId << ", Confidence: " << conf << endl;
 	}
 
 	vector<int> indices;
@@ -71,6 +73,7 @@ int main(int argc, char const *argv[])
 		putText(image, class_names[classIds[idx]], Point(box.x, box.y - 5),
 				FONT_HERSHEY_SIMPLEX, 0.6, Scalar(255, 255, 255), 2);
 	}
+	resize(image, image, Size(640, 640));
 	imshow("Detections", image);
 	waitKey(0);
 
