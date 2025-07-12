@@ -44,13 +44,13 @@ void preprocessing(cv::Mat &image)
 	{
 		set_pixel_zero(image, image, 0, i);
 		set_pixel_zero(image, image, 1, i);
-		// set_pixel_zero(image, image, 2, i);
+		//  set_pixel_zero(image, image, 2, i);
 	}
 	cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+	cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0.0f, 0.25f / 3.0f, 0.0f, 0.25 / 3.0f, 2 / 3.0f, 0.25 / 3.0f, 0.0f, 0.25 / 3.0f, 0);
+	// cv::filter2D(image, image, image.depth(), smooth);
 	cv::equalizeHist(image, image);
-	cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0, (float)0.5 / 4, 0, (float)0.5 / 4, (float)2 / 4, (float)0.5 / 4, 0, (float)0.5 / 4, 0);
-	cv::filter2D(image, image, image.depth(), smooth);
-	cv::threshold(image, image, 100, 255, cv::THRESH_BINARY);
+	cv::threshold(image, image, 110, 255, cv::THRESH_BINARY);
 	// cv::filter2D(image, image, image.depth(), smooth);
 	cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
 }

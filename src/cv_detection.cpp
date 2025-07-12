@@ -59,8 +59,8 @@ int main(int argc, char **argv)
 
 		if (frameCount % 2 == 0)
 		{
-			auto begin = std::chrono::high_resolution_clock::now();
 			pp = frame.clone();
+			auto begin = std::chrono::high_resolution_clock::now();
 			preprocessing(pp);
 			rects = process(pp);
 			auto end = std::chrono::high_resolution_clock::now();
@@ -91,8 +91,11 @@ int main(int argc, char **argv)
 			std::string cardText = bestRank + " of " + bestSuit;
 			cv::putText(frame, cardText, rects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0, 0, 255), 1.5);
 #else
-			// std::vector<card_corner> detected = detect_with_sliding_window(cards[i], rankTemp);
 			std::vector<card_corner> detected = detect_with_tl_window(cards[i], rankTemp);
+			if (detected.size() == 0)
+			{
+				detected = detect_with_sliding_window(cards[i], rankTemp);
+			}
 			for (auto &d : detected)
 			{
 				std::string txt = d.rank;
