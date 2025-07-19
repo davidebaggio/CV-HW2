@@ -1,5 +1,83 @@
 #include "process.hpp"
 
+std::pair<cv::Point, cv::Point> get_rotated_extremes(const std::vector<cv::Point>& contour)
+{
+    if (contour.empty())
+        return {cv::Point(-1, -1), cv::Point(-1, -1)};
+
+    cv::RotatedRect box = cv::minAreaRect(contour);
+    cv::Point2f corners[4];
+    box.points(corners);
+
+    cv::Point topRight = corners[0];
+    cv::Point bottomLeft = corners[0];
+
+    for (int i = 1; i < 4; ++i)
+    {
+        const cv::Point& pt = corners[i];
+
+        // Top-right: più alto (y min), in caso di pareggio più a destra (x max)
+        if ((pt.y < topRight.y) || (pt.y == topRight.y && pt.x > topRight.x))
+            topRight = pt;
+
+        // Bottom-left: più basso (y max), in caso di pareggio più a sinistra (x min)
+        if ((pt.y > bottomLeft.y) || (pt.y == bottomLeft.y && pt.x < bottomLeft.x))
+            bottomLeft = pt;
+    }
+
+    return {topRight, bottomLeft};
+}
+
+std::vector<std::pair<cv::Point, cv::Point>> get_all_rotated_extreme_points(const std::vector<std::vector<cv::Point>>& contours)
+{
+    std::vector<std::pair<cv::Point, cv::Point>> extremes;
+
+    for (const auto& contour : contours)
+    {
+        extremes.push_back(get_rotated_extremes(contour));
+    }
+
+    return extremes;
+}
+
+
+// Funzione per ottenere una linea tra due punti (Bresenham)
+std::vector<cv::Point> get_line_points(const cv::Point& p1, const cv::Point& p2, cv::Mat &image)
+{
+    std::vector<cv::Point> linePoints;
+    cv::LineIterator it(image, p1, p2, 8);
+
+    for (int i = 0; i < it.count; ++i, ++it)
+    {
+        linePoints.push_back(it.pos());
+    }
+    return linePoints;
+}
+
+// Funzione che accetta più coppie di estremi
+std::vector<std::vector<cv::Point>> get_lines_from_extremes(const std::vector<std::pair<cv::Point, cv::Point>>& extremes, cv::Mat &image)
+{
+    std::vector<std::vector<cv::Point>> allLines;
+
+    for (const auto& pair : extremes)
+    {
+        const cv::Point& p1 = pair.first;
+        const cv::Point& p2 = pair.second;
+
+        if (p1 == cv::Point(-1, -1) || p2 == cv::Point(-1, -1))
+        {
+            allLines.push_back({});  // linea vuota per contorno vuoto
+        }
+        else
+        {
+            allLines.push_back(get_line_points(p1, p2, image));
+        }
+    }
+
+    return allLines;
+}
+
+
 std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 {
 	if (image.empty())
@@ -8,9 +86,9 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		return std::vector<std::vector<cv::Point>>();
 	}
 	std::vector<std::vector<cv::Point>> contours;
-	cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+	cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
 
-	std::vector<std::vector<cv::Point>> polys;
+	std::vector<std::vector<cv::Point>> polys, cards;
 	for (auto &contour : contours)
 	{
 		std::vector<cv::Point> hull;
@@ -20,6 +98,7 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		if (area < 3000 || peri < 250)
 			continue;
 
+		
 		// std::cout << "Area: " << area << std::endl;
 		// std::cout << "Peri: " << peri << std::endl;
 		std::vector<cv::Point> approx;
@@ -29,6 +108,7 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		{
 			quad.assign(approx.begin(), approx.end());
 			polys.push_back(approx);
+			cards.push_back(contour);
 		}
 		else
 		{
@@ -37,11 +117,52 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 			mr.points(pts);
 			quad = {pts, pts + 4};
 			polys.push_back(quad);
+			cards.push_back(contour);
 		}
 	}
 
+	std::vector<std::pair<cv::Point, cv::Point>> etr_points;
+	etr_points = get_all_rotated_extreme_points(cards);
+
+	std::vector<std::vector<cv::Point>> lines = get_lines_from_extremes(etr_points, image);
+
+
+	cv::Mat drawing = cv::Mat::zeros(image.size(), CV_8UC3);
+
+
+	// Disegna i contorni
+	for (size_t i = 0; i < cards.size(); ++i)
+	{
+		cv::drawContours(drawing, cards, static_cast<int>(i), cv::Scalar(255, 255, 255), 1);
+	}
+
+	for (size_t i = 0; i < etr_points.size(); ++i)
+	{
+    	const auto& pair = etr_points[i];
+    	std::cout << "Coppia " << i << ": "
+              << "Top-Right = (" << pair.first.x << ", " << pair.first.y << "), "
+              << "Bottom-Left = (" << pair.second.x << ", " << pair.second.y << ")"
+              << std::endl;
+	}
+
+	// Disegna le linee
+	for (const auto& line : lines)
+	{
+		for (const auto& pt : line)
+		{
+			if (pt.y >= 0 && pt.y < drawing.rows && pt.x >= 0 && pt.x < drawing.cols)
+				drawing.at<cv::Vec3b>(pt) = cv::Vec3b(255, 0, 0);  // Blu
+		}
+	}
+	
+
+	// Mostra risultato
+	cv::imshow("Contorni + Linee", drawing);
+	cv::waitKey(0);
+
 	return polys;
 }
+
 
 void sharpen_image(cv::Mat &image)
 {
@@ -108,7 +229,7 @@ std::vector<cv::Mat> get_cards(const cv::Mat &src, const std::vector<std::vector
 		/* cv::imshow("warped", card);
 		cv::waitKey(0); */
 		// cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
-		//  cv::dilate(card, card, kernel);
+		// cv::dilate(card, card, kernel);
 		cards.push_back(card);
 	}
 	return cards;

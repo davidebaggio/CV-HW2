@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 			std::cout << "End of video or cannot read frame\n";
 			break;
 		}
-		if (frameCount < 4000)
+		if (frameCount < 1000)
 		{
 			frameCount++;
 			continue;
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 		cv::Mat result;
 		pp.copyTo(result, mask);
 		sharpen_image(result);
-		// cv::imshow("Processed", pp);
+		//cv::imshow("Processed", pp);
 
 		std::vector<cv::Mat> cards = get_cards(result, rects);
 
