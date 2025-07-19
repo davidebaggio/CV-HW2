@@ -7,6 +7,7 @@ void set_pixel_zero(cv::Mat &src, cv::Mat &dst, size_t col, int threshold);
 
 void invert_pixel(cv::Mat &src, cv::Mat &dst);
 
-void preprocessing(cv::Mat &image);
+void preprocessing_light(cv::Mat &image);
+void preprocessing_strong(cv::Mat &image);
 
 #endif // PREPROCESS_HPP

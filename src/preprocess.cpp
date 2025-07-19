@@ -32,7 +32,32 @@ void invert_pixel(cv::Mat &src, cv::Mat &dst)
 	}
 }
 
-void preprocessing(cv::Mat &image)
+void preprocessing_light(cv::Mat &image)
+{
+	if (image.empty())
+	{
+		std::cout << "Image is empty" << std::endl;
+		return;
+	}
+	// remove blue and green background of table
+	for (size_t i = 220; i > 40; i -= 5)
+	{
+		set_pixel_zero(image, image, 0, i);
+		set_pixel_zero(image, image, 1, i);
+		//  set_pixel_zero(image, image, 2, i);
+	}
+
+
+	cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+	cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0.0f, 0.25f / 3.0f, 0.0f, 0.25 / 3.0f, 2 / 3.0f, 0.25 / 3.0f, 0.0f, 0.25 / 3.0f, 0);
+	cv::filter2D(image, image, image.depth(), smooth);
+	cv::equalizeHist(image, image);
+	cv::threshold(image, image, 110, 255, cv::THRESH_BINARY);
+	cv::filter2D(image, image, image.depth(), smooth);
+	cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
+}
+
+void preprocessing_strong(cv::Mat &image)
 {
 	if (image.empty())
 	{
@@ -52,27 +77,7 @@ void preprocessing(cv::Mat &image)
 
 	// Applica la maschera all’immagine
 	cv::Mat white_like = cv::Mat::zeros(image.size(), image.type());
-	image.setTo(cv::Scalar(0, 0, 0), ~mask_white);
-
-	cv::imshow("Masked", image);
-	cv::waitKey(0);
-
-	// remove blue and green background of table
-	for (size_t i = 220; i > 40; i -= 5)
-	{
-		set_pixel_zero(image, image, 0, i);
-		set_pixel_zero(image, image, 1, i);
-		//  set_pixel_zero(image, image, 2, i);
-	}
-
-
-	/*cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-	cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0.0f, 0.25f / 3.0f, 0.0f, 0.25 / 3.0f, 2 / 3.0f, 0.25 / 3.0f, 0.0f, 0.25 / 3.0f, 0);
-	// cv::filter2D(image, image, image.depth(), smooth);
-	cv::equalizeHist(image, image);
-	cv::threshold(image, image, 110, 255, cv::THRESH_BINARY);
-	// cv::filter2D(image, image, image.depth(), smooth);
-	cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);*/
+	image.setTo(cv::Scalar(0, 0, 0), ~mask_white);	
 	
 	// Converti in scala di grigi per uso successivo
 	cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);

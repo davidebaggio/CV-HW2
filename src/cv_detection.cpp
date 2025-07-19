@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	int frameCount = 0;
 
 	// 3. Loop: grab each frame, process, display (or save)
-	cv::Mat pp;
+	cv::Mat s_pp,l_pp;
 	std::vector<std::vector<cv::Point>> rects;
 	std::vector<cv::Mat> all_frames;
 	while (true)
@@ -59,10 +59,12 @@ int main(int argc, char **argv)
 
 		if (frameCount % 2 == 0)
 		{
-			pp = frame.clone();
+			s_pp = frame.clone();
+			l_pp = frame.clone();
 			auto begin = std::chrono::high_resolution_clock::now();
-			preprocessing(pp);
-			rects = process(pp);
+			preprocessing_strong(s_pp);
+			preprocessing_light(l_pp);
+			rects = process(s_pp);
 			auto end = std::chrono::high_resolution_clock::now();
 			auto dur = end - begin;
 			auto s = (float)std::chrono::duration_cast<std::chrono::milliseconds>(dur).count() / 1000;
@@ -74,9 +76,9 @@ int main(int argc, char **argv)
 		fillPoly(mask, rects, cv::Scalar(255));
 
 		cv::Mat result;
-		pp.copyTo(result, mask);
+		l_pp.copyTo(result, mask);
 		sharpen_image(result);
-		//cv::imshow("Processed", pp);
+		cv::imshow("Processed", result);
 
 		std::vector<cv::Mat> cards = get_cards(result, rects);
 
