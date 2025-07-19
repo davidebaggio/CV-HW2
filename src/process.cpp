@@ -32,19 +32,6 @@ std::pair<cv::Point, cv::Point> find_closest_to_corners(const std::vector<cv::Po
     return {closestToBottomLeft, closestToTopRight};
 }
 
-std::vector<std::pair<cv::Point, cv::Point>> get_all_rotated_extreme_points(const std::vector<std::vector<cv::Point>>& contours)
-{
-    std::vector<std::pair<cv::Point, cv::Point>> extremes;
-
-    for (const auto& contour : contours)
-    {
-        extremes.push_back(get_rotated_extremes(contour));
-    }
-
-    return extremes;
-}
-
-
 // Funzione per ottenere una linea tra due punti (Bresenham)
 std::vector<cv::Point> get_line_points(const cv::Point& p1, const cv::Point& p2, cv::Mat &image)
 {
