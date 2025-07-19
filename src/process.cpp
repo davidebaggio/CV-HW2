@@ -1,5 +1,37 @@
 #include "process.hpp"
 
+std::pair<cv::Point, cv::Point> find_closest_to_corners(const std::vector<cv::Point> &card, const cv::Size &image_size)
+{
+    cv::Point topRightCorner(image_size.width - 1, 0);
+    cv::Point bottomLeftCorner(0, image_size.height - 1);
+
+    cv::Point closestToTopRight(-1, -1);
+    cv::Point closestToBottomLeft(-1, -1);
+    double minDistTopRight = std::numeric_limits<double>::max();
+    double minDistBottomLeft = std::numeric_limits<double>::max();
+
+    
+	for (const auto &pt : card)
+	{
+		double distTopRight = cv::norm(pt - topRightCorner);
+		if (distTopRight < minDistTopRight)
+		{
+			minDistTopRight = distTopRight;
+			closestToTopRight = pt;
+		}
+
+		double distBottomLeft = cv::norm(pt - bottomLeftCorner);
+		if (distBottomLeft < minDistBottomLeft)
+		{
+			minDistBottomLeft = distBottomLeft;
+			closestToBottomLeft = pt;
+		}
+	}
+    
+
+    return {closestToBottomLeft, closestToTopRight};
+}
+
 std::pair<cv::Point, cv::Point> get_rotated_extremes(const std::vector<cv::Point>& contour)
 {
     if (contour.empty())
@@ -122,7 +154,12 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 	}
 
 	std::vector<std::pair<cv::Point, cv::Point>> etr_points;
-	etr_points = get_all_rotated_extreme_points(cards);
+	//etr_points = get_all_rotated_extreme_points(cards);
+	for (const auto &card : cards)
+    {
+		etr_points.push_back(find_closest_to_corners(card, image.size()));
+	}	
+
 
 	std::vector<std::vector<cv::Point>> lines = get_lines_from_extremes(etr_points, image);
 

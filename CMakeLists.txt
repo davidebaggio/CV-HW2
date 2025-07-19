@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 PROJECT (counting_cards)
 set(CMAKE_CXX_STANDARD 17)
 find_package(OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(LIB_TINYXML
 	src/tinyxml2.cpp
