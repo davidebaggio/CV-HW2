@@ -32,34 +32,6 @@ std::pair<cv::Point, cv::Point> find_closest_to_corners(const std::vector<cv::Po
     return {closestToBottomLeft, closestToTopRight};
 }
 
-std::pair<cv::Point, cv::Point> get_rotated_extremes(const std::vector<cv::Point>& contour)
-{
-    if (contour.empty())
-        return {cv::Point(-1, -1), cv::Point(-1, -1)};
-
-    cv::RotatedRect box = cv::minAreaRect(contour);
-    cv::Point2f corners[4];
-    box.points(corners);
-
-    cv::Point topRight = corners[0];
-    cv::Point bottomLeft = corners[0];
-
-    for (int i = 1; i < 4; ++i)
-    {
-        const cv::Point& pt = corners[i];
-
-        // Top-right: più alto (y min), in caso di pareggio più a destra (x max)
-        if ((pt.y < topRight.y) || (pt.y == topRight.y && pt.x > topRight.x))
-            topRight = pt;
-
-        // Bottom-left: più basso (y max), in caso di pareggio più a sinistra (x min)
-        if ((pt.y > bottomLeft.y) || (pt.y == bottomLeft.y && pt.x < bottomLeft.x))
-            bottomLeft = pt;
-    }
-
-    return {topRight, bottomLeft};
-}
-
 std::vector<std::pair<cv::Point, cv::Point>> get_all_rotated_extreme_points(const std::vector<std::vector<cv::Point>>& contours)
 {
     std::vector<std::pair<cv::Point, cv::Point>> extremes;
