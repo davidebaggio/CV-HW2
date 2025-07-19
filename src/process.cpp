@@ -32,6 +32,21 @@ std::pair<cv::Point, cv::Point> find_closest_to_corners(const std::vector<cv::Po
     return {closestToBottomLeft, closestToTopRight};
 }
 
+void reorder_contour_with_bottom_left_first(std::vector<cv::Point> &contour, const cv::Point &bottom_left)
+{
+    auto it = std::find(contour.begin(), contour.end(), bottom_left);
+    if (it != contour.end())
+    {
+        std::rotate(contour.begin(), it, contour.end());
+    }
+    else
+    {
+        std::cerr << "Errore: punto bottom_left non trovato nel contorno." << std::endl;
+    }
+}
+
+
+
 // Funzione per ottenere una linea tra due punti (Bresenham)
 std::vector<cv::Point> get_line_points(const cv::Point& p1, const cv::Point& p2, cv::Mat &image)
 {
@@ -113,11 +128,14 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 	}
 
 	std::vector<std::pair<cv::Point, cv::Point>> etr_points;
-	//etr_points = get_all_rotated_extreme_points(cards);
-	for (const auto &card : cards)
-    {
-		etr_points.push_back(find_closest_to_corners(card, image.size()));
-	}	
+
+	for (auto &card : cards)
+	{
+		auto corners = find_closest_to_corners(card, image.size());
+		etr_points.push_back(corners);
+
+		reorder_contour_with_bottom_left_first(card, corners.first);
+	}
 
 
 	std::vector<std::vector<cv::Point>> lines = get_lines_from_extremes(etr_points, image);
@@ -150,6 +168,28 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 				drawing.at<cv::Vec3b>(pt) = cv::Vec3b(255, 0, 0);  // Blu
 		}
 	}
+
+	cv::Mat debug_image = cv::Mat::zeros(image.size(), CV_8UC3);
+
+	for (const auto &card : cards)
+	{
+		int total_points = static_cast<int>(card.size());
+		for (int i = 0; i < total_points; ++i)
+		{
+			const cv::Point &pt = card[i];
+
+			// Gradiente lineare di rosso (da scuro a molto acceso)
+			int red_intensity = static_cast<int>(255.0 * i / (total_points - 1));
+			red_intensity = std::clamp(red_intensity, 0, 255);  // sicurezza
+
+			// Disegna il punto sulla matrice (rosso con gradiente)
+			if (pt.y >= 0 && pt.y < debug_image.rows && pt.x >= 0 && pt.x < debug_image.cols)
+				debug_image.at<cv::Vec3b>(pt) = cv::Vec3b(0, 0, red_intensity);
+		}
+}
+
+	cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
+	cv::waitKey(0);
 	
 
 	// Mostra risultato
