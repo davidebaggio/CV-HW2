@@ -82,6 +82,38 @@ std::vector<std::vector<cv::Point>> get_lines_from_extremes(const std::vector<st
 
     return allLines;
 }
+//------------------------------
+
+double point_line_distance(const cv::Point &p, const cv::Point &p1, const cv::Point &p2, double line_length)
+{
+    cv::Point2f d1 = p - p1;
+    cv::Point2f d2 = p2 - p1;
+    return std::abs(d1.x * d2.y - d1.y * d2.x) / line_length;
+}
+
+
+std::vector<int> find_local_maxima(const std::vector<double>& distances, int window_size)
+{
+    std::vector<int> local_maxima;
+    int n = distances.size();
+    for (int i = 0; i < n; ++i)
+    {
+        bool is_max = true;
+        for (int j = std::max(0, i - window_size); j <= std::min(n - 1, i + window_size); ++j)
+        {
+            if (distances[j] > distances[i])
+            {
+                is_max = false;
+                break;
+            }
+        }
+        if (is_max)
+            local_maxima.push_back(i);
+    }
+    return local_maxima;
+}
+
+//-------------------------
 
 
 std::vector<std::vector<cv::Point>> process(cv::Mat &image)
@@ -188,15 +220,43 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		}
 }
 
-	cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
-	cv::waitKey(0);
-	
+for (int idx = 0; idx < cards.size(); ++idx)
+{
+    auto& contour = cards[idx];
+    auto [p1, p2] = etr_points[idx];
+    double line_length = cv::norm(p2 - p1);
 
-	// Mostra risultato
-	cv::imshow("Contorni + Linee", drawing);
-	cv::waitKey(0);
+    std::vector<double> distances;
+    distances.reserve(contour.size());
 
-	return polys;
+    for (const auto& pt : contour)
+        distances.push_back(point_line_distance(pt, p1, p2, line_length));
+
+    std::vector<int> max_indices = find_local_maxima(distances, 10);
+
+    for (int idx_max : max_indices)
+    {
+        const auto& pt = contour[idx_max];
+        if (pt.y >= 0 && pt.y < drawing.rows && pt.x >= 0 && pt.x < drawing.cols)
+        {
+            // Verde BGR
+            drawing.at<cv::Vec3b>(pt) = cv::Vec3b(0, 255, 0);
+            // Cerchietto verde opzionale per visibilità
+            cv::circle(drawing, pt, 3, cv::Scalar(0, 255, 0), -1);
+        }
+    }
+}
+
+
+cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
+cv::waitKey(0);
+
+
+// Mostra risultato
+cv::imshow("Contorni + Linee", drawing);
+cv::waitKey(0);
+
+return polys;
 }
 
 
