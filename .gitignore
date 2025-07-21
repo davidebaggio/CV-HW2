@@ -16,3 +16,5 @@ report/*.log
 !report/proposal.pdf
 !report/proposal.tex
 !report/proposal.pdf
+
+libtorch
