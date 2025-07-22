@@ -22,6 +22,6 @@ std::pair<std::string, double> best_template_match(const cv::Mat &patch, const s
 
 std::string detect_card_sift(const cv::Mat &queryImg, std::unordered_map<std::string, cv::Mat> &rankDesc, int &rankScore, std::vector<cv::KeyPoint> &outQueryKpts);
 std::vector<card_corner> detect_with_sliding_window(const cv::Mat &gray, std::unordered_map<std::string, cv::Mat> &rankTemplate, std::vector<double> scales = {1.0 /* , 0.8, 0.6 */}, cv::Size baseWindow = cv::Size(70, 125), int stride = 40, double rankThresh = 0.97);
-std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray, std::unordered_map<std::string, cv::Mat> &rankTemplate, std::vector<double> scales = {1.0}, cv::Size baseWindow = cv::Size(50, 170), double rankThresh = 0.97);
+std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray, std::unordered_map<std::string, cv::Mat> &rankTemplate, std::vector<double> scales = {1.0}, cv::Size baseWindow = cv::Size(85, 115), double rankThresh = 0.97);
 
 #endif // DETECT_HPP

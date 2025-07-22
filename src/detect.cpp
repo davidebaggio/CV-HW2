@@ -200,22 +200,48 @@ std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray,
 
 	for (double scale : scales)
 	{
-		// Compute scaled window size
 		cv::Size winSize(cvRound(baseWindow.width * scale), cvRound(baseWindow.height * scale));
 		if (winSize.width < 20 || winSize.height < 20)
 			continue;
 
-		cv::Rect win(0, 0, winSize.width, winSize.height / 2);
+		cv::Rect win(0, 0, winSize.width, winSize.height);
 		cv::Mat patch = gray(win);
 		if (cv::countNonZero(patch) < 0.15 * patch.rows * patch.cols)
 			continue;
-		// Binarize to match your templates
-		cv::Mat bw;
-		cv::threshold(patch, bw, 127, 255, cv::THRESH_BINARY_INV);
-		// cv::imshow("bw", bw);
-		// cv::waitKey(0);
 
-		// 1) rank match
+		// Usa binarizzazione solo per trovare contorni
+		cv::Mat bwBin;
+		cv::threshold(patch, bwBin, 127, 255, cv::THRESH_BINARY_INV);
+
+		// Trova contorni sulla binarizzazione
+		std::vector<std::vector<cv::Point>> contours;
+		cv::findContours(bwBin.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+
+		// Filtra contorni con area >= 450
+		std::vector<std::vector<cv::Point>> filteredContours;
+		for (const auto& contour : contours)
+		{
+			double area = cv::contourArea(contour);
+			if (area >= 450)
+				filteredContours.push_back(contour);
+		}
+
+		if (filteredContours.empty())
+			continue; // Nessun contorno valido
+
+		// Crea maschera dal primo contorno valido
+		cv::Mat mask = cv::Mat::zeros(patch.size(), CV_8UC1);
+		cv::drawContours(mask, filteredContours, 0, 255, cv::FILLED);
+
+		// Ora applica la maschera su patch originale (in scala di grigi)
+		cv::Mat bw(patch.size(), patch.type(), cv::Scalar(255)); // tutto bianco
+		patch.copyTo(bw, mask);
+
+		// Visualizza patch mascherato (opzionale)
+		cv::imshow("Patch mascherato (bw)", bw);
+		cv::waitKey(0);
+
+		// Matching su patch mascherato
 		auto [rankLabel, rankScore] = best_template_match(bw, rankTemplate, rankThresh);
 		if (rankLabel.empty())
 			continue;
@@ -224,5 +250,4 @@ std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray,
 	}
 
 	return non_max_suppression(detections, 0.1f);
-	// return detections;
 }
