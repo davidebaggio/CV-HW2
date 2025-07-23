@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 		cv::drawContours(frame, validRects, -1, cv::Scalar(255, 0, 0));
 		for (size_t i = 0; i < validRects.size(); ++i)
 		{
-			putText(frame, validTexts[i], validRects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 255, 0), 2);
+			putText(frame, validTexts[i], validRects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 		}
 
 		cv::imshow("Original", frame);
