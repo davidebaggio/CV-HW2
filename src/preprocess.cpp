@@ -94,7 +94,7 @@ void preprocessing_strong(cv::Mat &image)
 	kernel = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(9, 9));
 	cv::erode(image, image, kernel); 
 
-	cv::imshow("Processed Image", image);
-	cv::waitKey(0);
+	//cv::imshow("Processed Image", image);
+	//cv::waitKey(0);
 
 }

@@ -16,5 +16,7 @@ report/*.log
 !report/proposal.pdf
 !report/proposal.tex
 !report/proposal.pdf
+*.png
+*BACKUP*
 
 libtorch
