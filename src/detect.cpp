@@ -380,7 +380,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
 
     // === BINARIZZAZIONE ===
     cv::Mat bin;
-    cv::threshold(patch, bin, 127, 255, cv::THRESH_BINARY_INV);
+    cv::threshold(patch, bin, 180, 255, cv::THRESH_BINARY_INV);
 
     // === MORFOLOGIA (closing subito dopo binarizzazione) ===
     //cv::morphologyEx(bin, bin, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
@@ -451,7 +451,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     cv::Mat result(patch.size(), CV_8UC1, cv::Scalar(255));
     patch.copyTo(result, mask);
 
-    cv::threshold(result, result, 250, 255, cv::THRESH_BINARY);
+    cv::threshold(result, result, 234, 255, cv::THRESH_BINARY);
 
     cv::imshow("Patch centrato", result);
     // cv::waitKey(0);
