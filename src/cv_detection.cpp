@@ -15,13 +15,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	std::cout << "Building catalogue of SIFT descriptors" << std::endl;
-	std::unordered_map<std::string, cv::Mat> rankDesc, rankTemp;
-	build_catalogue_sift(rankDesc);
-	std::cout << "Catalogue of SIFT descriptors builded" << std::endl;
-	std::cout << "Building catalogue of Templates" << std::endl;
-	build_catalogue_tm(rankTemp);
-	std::cout << "Catalogue of Templates builded" << std::endl;
+	// std::unordered_map<std::string, cv::Mat> rankDesc;
+	// build_catalogue_sift(rankDesc);
+	// std::unordered_map<std::string, cv::Mat> rankTemp;
+	// build_catalogue_tm(rankTemp);
 
 	double fps = cap.get(cv::CAP_PROP_FPS);
 	int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
@@ -35,6 +32,9 @@ int main(int argc, char **argv)
 	std::vector<std::string> validTexts;
 	std::vector<cv::Mat> all_frames;
 
+	static std::vector<std::vector<cv::Point>> lastValidRects;
+	static std::vector<std::string> lastValidTexts;
+
 	while (true)
 	{
 		if (!cap.read(frame))
@@ -47,22 +47,28 @@ int main(int argc, char **argv)
 			frameCount++;
 			continue;
 		}
+
+		cv::Mat full_frame = frame.clone(); // salva frame completo per disegno e salvataggio
+
 		int y = frame.rows / 2;
 		int x = frame.cols / 2;
-		int h = int(0.55 * y);
+		int h = int(0.6 * y);
 		int w = int(0.7 * x);
-		frame = frame(cv::Range(y - h, y + h), cv::Range(x - w, x + w));
+
+		// estrai ROI centrale
+		cv::Rect roiRect(x - w, y - h, 2 * w, 2 * h);
+		cv::Mat roi = frame(roiRect);
 
 		if (frameCount % 2 == 0)
 		{
-			s_pp = frame.clone();
-			l_pp = frame.clone();
+			s_pp = roi.clone();
+			l_pp = roi.clone();
 
 			preprocessing_strong(s_pp);
 			preprocessing_light(l_pp);
 			rects = process(s_pp);
 
-			cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8U);
+			cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8U);
 			fillPoly(mask, rects, cv::Scalar(255));
 
 			cv::Mat result;
@@ -86,19 +92,31 @@ int main(int argc, char **argv)
 					continue;
 
 				std::string txt = recognize_cards(rank_patch);
-				validRects.push_back(rects[i]);
+				// std::string txt = recognize_card_sift(rank_patch, rankDesc);
+
+				// trasla i punti della ROI per adattarli al full_frame
+				std::vector<cv::Point> translated;
+				for (const auto& pt : rects[i])
+					translated.emplace_back(pt.x + roiRect.x, pt.y + roiRect.y);
+
+				validRects.push_back(translated);
 				validTexts.push_back(txt);
 			}
+
+			lastValidRects = validRects;
+			lastValidTexts = validTexts;
 		}
 
-		cv::drawContours(frame, validRects, -1, cv::Scalar(255, 0, 0));
-		for (size_t i = 0; i < validRects.size(); ++i)
+		// disegna i risultati sulla versione completa del frame
+		cv::drawContours(full_frame, lastValidRects, -1, cv::Scalar(255, 0, 0));
+		for (size_t i = 0; i < lastValidRects.size(); ++i)
 		{
-			putText(frame, validTexts[i], validRects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
+			putText(full_frame, lastValidTexts[i], lastValidRects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
 		}
 
-		cv::imshow("Original", frame);
-		all_frames.push_back(frame);
+		cv::imshow("Original", full_frame);
+		all_frames.push_back(full_frame);
+
 		char key = static_cast<char>(cv::waitKey(1));
 		if (key == 27)
 		{

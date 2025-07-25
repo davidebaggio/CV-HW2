@@ -363,7 +363,7 @@ cv::Mat extract_rank_patch(const cv::Mat& gray) {
 
 cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     
-	const cv::Size baseWindow(80, 120);
+    const cv::Size baseWindow(80, 120);
     const double scale = 1.2;
     cv::Size winSize(cvRound(baseWindow.width * scale), cvRound(baseWindow.height * scale));
 
@@ -375,12 +375,15 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     cv::Mat patch = gray(win).clone();  // clone to avoid modifying input
 
     // === CONTRASTO (CLAHE) ===
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(4.0, cv::Size(8, 8));
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(8.0, cv::Size(8, 8));
     clahe->apply(patch, patch);
 
     // === BINARIZZAZIONE ===
     cv::Mat bin;
     cv::threshold(patch, bin, 127, 255, cv::THRESH_BINARY_INV);
+
+    // === MORFOLOGIA (closing subito dopo binarizzazione) ===
+    //cv::morphologyEx(bin, bin, cv::MORPH_CLOSE, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3)));
 
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(bin.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
@@ -391,7 +394,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
 
     cv::Point2f center(winSize.width / 2.0f, winSize.height / 2.0f);
     double centralBoxWidth = winSize.width * 0.5;
-    double centralBoxHeight = winSize.height * 0.1;
+    double centralBoxHeight = winSize.height * 0.5;
     cv::Rect centralRect(
         static_cast<int>(center.x - centralBoxWidth / 2.0),
         static_cast<int>(center.y - centralBoxHeight / 2.0),
@@ -454,6 +457,6 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     // cv::waitKey(0);
 
     return result;
-}
+}	
 
 

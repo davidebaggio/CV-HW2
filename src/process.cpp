@@ -41,7 +41,7 @@ void reorder_contour_with_bottom_left_first(std::vector<cv::Point> &contour, con
     }
     else
     {
-        std::cerr << "Errore: punto bottom_left non trovato nel contorno." << std::endl;
+        //std::cerr << "Errore: punto bottom_left non trovato nel contorno." << std::endl;
     }
 }
 
@@ -120,7 +120,7 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
     std::vector<std::pair<int, int>> pairs;
     if (indices.size() % 2 != 0)
     {
-        std::cerr << "Errore: numero dispari di massimi locali (" << indices.size() << ")" << std::endl;
+        //std::cerr << "Errore: numero dispari di massimi locali (" << indices.size() << ")" << std::endl;
         return pairs;
     }
 
@@ -163,7 +163,7 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		if (approx.size() == 4)
 		{
 			//quad.assign(approx.begin(), approx.end());
-			//polys.push_back(approx);
+			polys.push_back(approx);
 			cards.push_back(contour);	
 		}
 		else
@@ -236,100 +236,100 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 			if (pt.y >= 0 && pt.y < debug_image.rows && pt.x >= 0 && pt.x < debug_image.cols)
 				debug_image.at<cv::Vec3b>(pt) = cv::Vec3b(0, 0, red_intensity);
 		}
-}
-std::vector<std::pair<int, int>> paired_indices;
-std::vector<std::vector<cv::Point>> temp_cards;
-const int PIXEL_TOLERANCE = 5;
-
-for (int idx = 0; idx < cards.size(); ++idx)
-{
-    auto& contour = cards[idx];
-    auto [p1, p2] = etr_points[idx];
-    double line_length = cv::norm(p2 - p1);
-
-    std::vector<double> distances;
-    distances.reserve(contour.size());
-
-    for (const auto& pt : contour)
-        distances.push_back(point_line_distance(pt, p1, p2, line_length));
-
-	std::vector<int> max_indices = find_local_maxima(distances, 10);
-
-	paired_indices = pair_indices_symmetric(max_indices);
-
-	// Colori distinti per ogni coppia
-	std::vector<cv::Scalar> colors = {
-		cv::Scalar(0, 255, 0),      // Verde
-		cv::Scalar(0, 0, 255),      // Rosso
-		cv::Scalar(255, 0, 0),      // Blu
-		cv::Scalar(0, 255, 255),    // Giallo
-		cv::Scalar(255, 0, 255),    // Magenta
-		cv::Scalar(255, 255, 0),    // Ciano
-		cv::Scalar(128, 128, 0),    // Oliva
-		cv::Scalar(0, 128, 128),    // Teal
-		cv::Scalar(128, 0, 128)     // Viola
-		// Aggiungi altri colori se necessario
-	};
-
-	for (size_t k = 0; k < paired_indices.size(); ++k)
-	{
-		auto [idx_a, idx_b] = paired_indices[k];
-		cv::Scalar color = colors[k % colors.size()];
-
-		const cv::Point& pt_a = contour[idx_a];
-		const cv::Point& pt_b = contour[idx_b];
-
-		if (pt_a.y >= 0 && pt_a.y < drawing.rows && pt_a.x >= 0 && pt_a.x < drawing.cols)
-			cv::circle(drawing, pt_a, 4, color, -1);
-
-		if (pt_b.y >= 0 && pt_b.y < drawing.rows && pt_b.x >= 0 && pt_b.x < drawing.cols)
-			cv::circle(drawing, pt_b, 4, color, -1);
 	}
+	std::vector<std::pair<int, int>> paired_indices;
+	std::vector<std::vector<cv::Point>> temp_cards;
+	const int PIXEL_TOLERANCE = 5;
 
-	temp_cards.reserve(paired_indices.size());  // Prealloca lo spazio
-
-	for (size_t i = 0; i < paired_indices.size(); ++i)
+	for (int idx = 0; idx < cards.size(); ++idx)
 	{
-		int idx_a = paired_indices[i].first;
-		int idx_b = paired_indices[i].second;
+		auto& contour = cards[idx];
+		auto [p1, p2] = etr_points[idx];
+		double line_length = cv::norm(p2 - p1);
 
-		// Accesso ai punti nel contorno
-		cv::Point& pt_a = contour[idx_a];
-		cv::Point& pt_b = contour[idx_b];
+		std::vector<double> distances;
+		distances.reserve(contour.size());
 
-		if (!(pt_a.x + PIXEL_TOLERANCE > image.cols || pt_b.x - PIXEL_TOLERANCE < 0 ||
-		   pt_a.y + PIXEL_TOLERANCE > image.rows || pt_b.y - PIXEL_TOLERANCE < 0))
+		for (const auto& pt : contour)
+			distances.push_back(point_line_distance(pt, p1, p2, line_length));
+
+		std::vector<int> max_indices = find_local_maxima(distances, 10);
+
+		paired_indices = pair_indices_symmetric(max_indices);
+
+		// Colori distinti per ogni coppia
+		std::vector<cv::Scalar> colors = {
+			cv::Scalar(0, 255, 0),      // Verde
+			cv::Scalar(0, 0, 255),      // Rosso
+			cv::Scalar(255, 0, 0),      // Blu
+			cv::Scalar(0, 255, 255),    // Giallo
+			cv::Scalar(255, 0, 255),    // Magenta
+			cv::Scalar(255, 255, 0),    // Ciano
+			cv::Scalar(128, 128, 0),    // Oliva
+			cv::Scalar(0, 128, 128),    // Teal
+			cv::Scalar(128, 0, 128)     // Viola
+			// Aggiungi altri colori se necessario
+		};
+
+		for (size_t k = 0; k < paired_indices.size(); ++k)
 		{
-			pt_a.x = pt_a.x + PIXEL_TOLERANCE;
-			pt_a.y = pt_a.y + PIXEL_TOLERANCE;
-			pt_b.y = pt_b.y - PIXEL_TOLERANCE;
-			pt_b.x = pt_b.x - PIXEL_TOLERANCE;
-		
+			auto [idx_a, idx_b] = paired_indices[k];
+			cv::Scalar color = colors[k % colors.size()];
+
+			const cv::Point& pt_a = contour[idx_a];
+			const cv::Point& pt_b = contour[idx_b];
+
+			if (pt_a.y >= 0 && pt_a.y < drawing.rows && pt_a.x >= 0 && pt_a.x < drawing.cols)
+				cv::circle(drawing, pt_a, 4, color, -1);
+
+			if (pt_b.y >= 0 && pt_b.y < drawing.rows && pt_b.x >= 0 && pt_b.x < drawing.cols)
+				cv::circle(drawing, pt_b, 4, color, -1);
 		}
-		
 
-		// Costruisci i punti top_right e bottom_left "incrociando" coordinate
-		cv::Point top_right(pt_b.x, pt_a.y);
-		cv::Point bottom_left(pt_a.x, pt_b.y);
+		temp_cards.reserve(paired_indices.size());  // Prealloca lo spazio
 
-		// Crea un quadrilatero con questi 4 punti
-		std::vector<cv::Point> quad = { pt_b, top_right, pt_a, bottom_left };
+		for (size_t i = 0; i < paired_indices.size(); ++i)
+		{
+			int idx_a = paired_indices[i].first;
+			int idx_b = paired_indices[i].second;
 
-		temp_cards.push_back(quad);
+			// Accesso ai punti nel contorno
+			cv::Point& pt_a = contour[idx_a];
+			cv::Point& pt_b = contour[idx_b];
+
+			if (!(pt_a.x + PIXEL_TOLERANCE > image.cols || pt_b.x - PIXEL_TOLERANCE < 0 ||
+			pt_a.y + PIXEL_TOLERANCE > image.rows || pt_b.y - PIXEL_TOLERANCE < 0))
+			{
+				pt_a.x = pt_a.x + PIXEL_TOLERANCE;
+				pt_a.y = pt_a.y + PIXEL_TOLERANCE;
+				pt_b.y = pt_b.y - PIXEL_TOLERANCE;
+				pt_b.x = pt_b.x - PIXEL_TOLERANCE;
+			
+			}
+			
+
+			// Costruisci i punti top_right e bottom_left "incrociando" coordinate
+			cv::Point top_right(pt_b.x, pt_a.y);
+			cv::Point bottom_left(pt_a.x, pt_b.y);
+
+			// Crea un quadrilatero con questi 4 punti
+			std::vector<cv::Point> quad = { pt_b, top_right, pt_a, bottom_left };
+
+			temp_cards.push_back(quad);
+		}
+
+
 	}
 
 
-	}
+
+		//cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
+		//cv::waitKey(0);
 
 
-
-	//cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
-	//cv::waitKey(0);
-
-
-	// Mostra risultato
-	//cv::imshow("Contorni + Linee", drawing);
-	//cv::waitKey(0);
+		// Mostra risultato
+		//cv::imshow("Contorni + Linee", drawing);
+		//cv::waitKey(0);
 
 	return temp_cards;
 }

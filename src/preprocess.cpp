@@ -82,19 +82,19 @@ void preprocessing_strong(cv::Mat &image)
 	// Converti in scala di grigi per uso successivo
 	cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
-
+	cv::Mat kernel;
 	// Dilatazione
-	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+	kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
 	cv::dilate(image, image, kernel); 
 
 	std::vector<std::vector<cv::Point>> contours;
 	cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
 	cv::fillPoly(image, contours, cv::Scalar(255));
 
-	kernel = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(9, 9));
+	kernel = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(11, 11));
 	cv::erode(image, image, kernel); 
 
-	//cv::imshow("Processed Image", image);
+	cv::imshow("Processed Image", image);
 	//cv::waitKey(0);
 
 }
