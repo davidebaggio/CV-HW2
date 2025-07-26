@@ -1,35 +1,32 @@
 #include "process.hpp"
 
-std::pair<cv::Point, cv::Point> find_closest_to_corners(const std::vector<cv::Point> &card, const cv::Size &image_size)
+std::vector<cv::Point> find_closest_to_corners(const std::vector<cv::Point> &card, const cv::Size &img_size)
 {
-    cv::Point topRightCorner(image_size.width - 1, 0);
-    cv::Point bottomLeftCorner(0, image_size.height - 1);
+    cv::Point tr_corner(img_size.width - 1, 0), bl_corner(0, img_size.height - 1);
+    cv::Point tr_closest(-1, -1), bl_closest(-1, -1);
 
-    cv::Point closestToTopRight(-1, -1);
-    cv::Point closestToBottomLeft(-1, -1);
-    double minDistTopRight = std::numeric_limits<double>::max();
-    double minDistBottomLeft = std::numeric_limits<double>::max();
+    double tr_minDist = std::numeric_limits<double>::max();
+    double bl_minDist = std::numeric_limits<double>::max();
 
-    
 	for (const auto &pt : card)
 	{
-		double distTopRight = cv::norm(pt - topRightCorner);
-		if (distTopRight < minDistTopRight)
+		double tr_dist = cv::norm(pt - tr_corner);
+		if (tr_dist < tr_minDist)
 		{
-			minDistTopRight = distTopRight;
-			closestToTopRight = pt;
+			tr_minDist = tr_dist;
+			tr_closest = pt;
 		}
 
-		double distBottomLeft = cv::norm(pt - bottomLeftCorner);
-		if (distBottomLeft < minDistBottomLeft)
+		double bl_dist = cv::norm(pt - bl_corner);
+		if (bl_dist < bl_minDist)
 		{
-			minDistBottomLeft = distBottomLeft;
-			closestToBottomLeft = pt;
+			bl_minDist = bl_dist;
+			bl_closest = pt;
 		}
 	}
     
 
-    return {closestToBottomLeft, closestToTopRight};
+    return {bl_closest, tr_closest};
 }
 
 void reorder_contour_with_bottom_left_first(std::vector<cv::Point> &contour, const cv::Point &bottom_left)
@@ -45,44 +42,6 @@ void reorder_contour_with_bottom_left_first(std::vector<cv::Point> &contour, con
     }
 }
 
-
-
-// Funzione per ottenere una linea tra due punti (Bresenham)
-std::vector<cv::Point> get_line_points(const cv::Point& p1, const cv::Point& p2, cv::Mat &image)
-{
-    std::vector<cv::Point> linePoints;
-    cv::LineIterator it(image, p1, p2, 8);
-
-    for (int i = 0; i < it.count; ++i, ++it)
-    {
-        linePoints.push_back(it.pos());
-    }
-    return linePoints;
-}
-
-// Funzione che accetta più coppie di estremi
-std::vector<std::vector<cv::Point>> get_lines_from_extremes(const std::vector<std::pair<cv::Point, cv::Point>>& extremes, cv::Mat &image)
-{
-    std::vector<std::vector<cv::Point>> allLines;
-
-    for (const auto& pair : extremes)
-    {
-        const cv::Point& p1 = pair.first;
-        const cv::Point& p2 = pair.second;
-
-        if (p1 == cv::Point(-1, -1) || p2 == cv::Point(-1, -1))
-        {
-            allLines.push_back({});  // linea vuota per contorno vuoto
-        }
-        else
-        {
-            allLines.push_back(get_line_points(p1, p2, image));
-        }
-    }
-
-    return allLines;
-}
-//------------------------------
 
 double point_line_distance(const cv::Point &p, const cv::Point &p1, const cv::Point &p2, double line_length)
 {
@@ -120,7 +79,7 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
     std::vector<std::pair<int, int>> pairs;
     if (indices.size() % 2 != 0)
     {
-        //std::cerr << "Errore: numero dispari di massimi locali (" << indices.size() << ")" << std::endl;
+        std::cerr << "Errore: numero dispari di massimi locali (" << indices.size() << ")" << std::endl;
         return pairs;
     }
 
@@ -133,205 +92,120 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
     return pairs;
 }
 
+std::vector<std::vector<cv::Point>> filter_contours(const std::vector<std::vector<cv::Point>>& contours, double min_area, double min_perimeter)
+{
+	std::vector<std::vector<cv::Point>> filtered;
+	for (const auto& contour : contours)
+	{
+		double area = cv::contourArea(contour);
+		double peri = cv::arcLength(contour, true);
+
+		if (area >= min_area && peri >= min_perimeter)
+		{
+			filtered.push_back(contour);
+		}
+	}
+	return filtered;
+}
+
+std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts, const cv::Size& image_size)
+{
+	std::vector<std::vector<cv::Point>> corner_pts;
+	cv::Point bl, br, tr, tl;
+
+	std::vector<std::pair<int, int>> paired_indices;
+	std::vector<int> max_indices;
+	int i = 0, j = 0;
+
+	const int PIXEL_TOLERANCE = 3;
+
+	std::vector<double> distances;
+	double line_length;
+
+	for (auto &card : cards)
+	{
+		bool first = true;
+
+		bl = cv::Point(ext_pts[i][0].x - PIXEL_TOLERANCE, ext_pts[i][0].y + PIXEL_TOLERANCE);
+		tr = cv::Point(ext_pts[i][1].x + PIXEL_TOLERANCE, ext_pts[i][1].y - PIXEL_TOLERANCE);
+
+		i++;
+
+		line_length = cv::norm(tr - bl);
+		
+		distances.clear();
+		distances.reserve(card.size());
+
+		for (const auto& pt : card)
+			distances.push_back(point_line_distance(pt, bl, tr, line_length));
+
+		max_indices = find_local_maxima(distances, 20);
+		
+		paired_indices = pair_indices_symmetric(max_indices);
+		
+		std::cout << "Card " << i << ": " << paired_indices.size() << " coppie di estremi trovate." << std::endl;
+
+		if (paired_indices.size() == 1)
+		{
+			br = cv::Point(card[paired_indices[0].first].x + PIXEL_TOLERANCE, card[paired_indices[0].first].y + PIXEL_TOLERANCE);
+			tl = cv::Point(card[paired_indices[0].second].x - PIXEL_TOLERANCE, card[paired_indices[0].second].y - PIXEL_TOLERANCE);
+			corner_pts.push_back({ bl, br, tr, tl });
+		}
+		else if (paired_indices.size() > 1)
+		{
+			for (j = 0; j < paired_indices.size() - 1; ++j)
+			{
+				br = cv::Point(card[paired_indices[j].first].x + PIXEL_TOLERANCE, card[paired_indices[j].first].y + PIXEL_TOLERANCE);
+				tl = cv::Point(card[paired_indices[j].second].x - PIXEL_TOLERANCE, card[paired_indices[j].second].y - PIXEL_TOLERANCE);
+
+				if (first)
+				{
+					first = false;
+					corner_pts.push_back({ bl, br, cv::Point(br.x, tl.y), tl });
+				}
+				else
+				{
+					corner_pts.push_back({ cv::Point(tl.x, br.y), br, cv::Point(br.x, tl.y), tl });
+				}
+			}
+
+			br = cv::Point(card[paired_indices[j].first].x + PIXEL_TOLERANCE, card[paired_indices[j].first].y + PIXEL_TOLERANCE);
+			tl = cv::Point(card[paired_indices[j].second].x - PIXEL_TOLERANCE, card[paired_indices[j].second].y - PIXEL_TOLERANCE);
+
+			// Ultimo blocco: usa l'ultimo tl e br
+			corner_pts.push_back({ cv::Point(tl.x, br.y), br, tr, tl });
+		}
+	}
+
+	return corner_pts;
+}
+
 
 std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 {
+
+	std::vector<std::vector<cv::Point>> contours, cards, ext_points, lines;
+
 	if (image.empty())
 	{
 		std::cout << "Image is empty" << std::endl;
-		return std::vector<std::vector<cv::Point>>();
-	}
-	std::vector<std::vector<cv::Point>> contours;
-	cv::findContours(image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-
-	std::vector<std::vector<cv::Point>> polys, cards;
-	for (auto &contour : contours)
-	{
-		std::vector<cv::Point> hull;
-		cv::convexHull(contour, hull);
-		double area = cv::contourArea(hull);
-		double peri = cv::arcLength(hull, true);
-		if (area < 3000 || peri < 250)
-			continue;
-
-		
-		// std::cout << "Area: " << area << std::endl;
-		// std::cout << "Peri: " << peri << std::endl;
-		std::vector<cv::Point> approx;
-		cv::approxPolyDP(hull, approx, 0.012 * peri, true);
-		std::vector<cv::Point> quad;
-		if (approx.size() == 4)
-		{
-			//quad.assign(approx.begin(), approx.end());
-			polys.push_back(approx);
-			cards.push_back(contour);	
-		}
-		else
-		{
-			cv::RotatedRect mr = cv::minAreaRect(hull);
-			cv::Point2f pts[4];
-			mr.points(pts);
-			quad = {pts, pts + 4};
-			polys.push_back(quad);
-			cards.push_back(contour);
-		}
+		return {};
 	}
 
-	std::vector<std::pair<cv::Point, cv::Point>> etr_points;
+	cv::findContours(image.clone(), contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+
+	cards = filter_contours(contours, 3000, 250);
 
 	for (auto &card : cards)
 	{
 		auto corners = find_closest_to_corners(card, image.size());
-		etr_points.push_back(corners);
+		ext_points.push_back(corners);
 
-		reorder_contour_with_bottom_left_first(card, corners.first);
+		reorder_contour_with_bottom_left_first(card, corners[0]);
 	}
+	
+	return extract_points_from_pairs(cards, ext_points, image.size());
 
-
-	std::vector<std::vector<cv::Point>> lines = get_lines_from_extremes(etr_points, image);
-
-
-	cv::Mat drawing = cv::Mat::zeros(image.size(), CV_8UC3);
-
-
-	// Disegna i contorni
-	for (size_t i = 0; i < cards.size(); ++i)
-	{
-		cv::drawContours(drawing, cards, static_cast<int>(i), cv::Scalar(255, 255, 255), 1);
-	}
-
-	for (size_t i = 0; i < etr_points.size(); ++i)
-	{
-    	const auto& pair = etr_points[i];
-    	std::cout << "Coppia " << i << ": "
-              << "Top-Right = (" << pair.first.x << ", " << pair.first.y << "), "
-              << "Bottom-Left = (" << pair.second.x << ", " << pair.second.y << ")"
-              << std::endl;
-	}
-
-	// Disegna le linee
-	for (const auto& line : lines)
-	{
-		for (const auto& pt : line)
-		{
-			if (pt.y >= 0 && pt.y < drawing.rows && pt.x >= 0 && pt.x < drawing.cols)
-				drawing.at<cv::Vec3b>(pt) = cv::Vec3b(255, 0, 0);  // Blu
-		}
-	}
-
-	cv::Mat debug_image = cv::Mat::zeros(image.size(), CV_8UC3);
-
-	for (const auto &card : cards)
-	{
-		int total_points = static_cast<int>(card.size());
-		for (int i = 0; i < total_points; ++i)
-		{
-			const cv::Point &pt = card[i];
-
-			// Gradiente lineare di rosso (da scuro a molto acceso)
-			int red_intensity = static_cast<int>(255.0 * i / (total_points - 1));
-			red_intensity = std::clamp(red_intensity, 0, 255);  // sicurezza
-
-			// Disegna il punto sulla matrice (rosso con gradiente)
-			if (pt.y >= 0 && pt.y < debug_image.rows && pt.x >= 0 && pt.x < debug_image.cols)
-				debug_image.at<cv::Vec3b>(pt) = cv::Vec3b(0, 0, red_intensity);
-		}
-	}
-	std::vector<std::pair<int, int>> paired_indices;
-	std::vector<std::vector<cv::Point>> temp_cards;
-	const int PIXEL_TOLERANCE = 5;
-
-	for (int idx = 0; idx < cards.size(); ++idx)
-	{
-		auto& contour = cards[idx];
-		auto [p1, p2] = etr_points[idx];
-		double line_length = cv::norm(p2 - p1);
-
-		std::vector<double> distances;
-		distances.reserve(contour.size());
-
-		for (const auto& pt : contour)
-			distances.push_back(point_line_distance(pt, p1, p2, line_length));
-
-		std::vector<int> max_indices = find_local_maxima(distances, 10);
-
-		paired_indices = pair_indices_symmetric(max_indices);
-
-		// Colori distinti per ogni coppia
-		std::vector<cv::Scalar> colors = {
-			cv::Scalar(0, 255, 0),      // Verde
-			cv::Scalar(0, 0, 255),      // Rosso
-			cv::Scalar(255, 0, 0),      // Blu
-			cv::Scalar(0, 255, 255),    // Giallo
-			cv::Scalar(255, 0, 255),    // Magenta
-			cv::Scalar(255, 255, 0),    // Ciano
-			cv::Scalar(128, 128, 0),    // Oliva
-			cv::Scalar(0, 128, 128),    // Teal
-			cv::Scalar(128, 0, 128)     // Viola
-			// Aggiungi altri colori se necessario
-		};
-
-		for (size_t k = 0; k < paired_indices.size(); ++k)
-		{
-			auto [idx_a, idx_b] = paired_indices[k];
-			cv::Scalar color = colors[k % colors.size()];
-
-			const cv::Point& pt_a = contour[idx_a];
-			const cv::Point& pt_b = contour[idx_b];
-
-			if (pt_a.y >= 0 && pt_a.y < drawing.rows && pt_a.x >= 0 && pt_a.x < drawing.cols)
-				cv::circle(drawing, pt_a, 4, color, -1);
-
-			if (pt_b.y >= 0 && pt_b.y < drawing.rows && pt_b.x >= 0 && pt_b.x < drawing.cols)
-				cv::circle(drawing, pt_b, 4, color, -1);
-		}
-
-		temp_cards.reserve(paired_indices.size());  // Prealloca lo spazio
-
-		for (size_t i = 0; i < paired_indices.size(); ++i)
-		{
-			int idx_a = paired_indices[i].first;
-			int idx_b = paired_indices[i].second;
-
-			// Accesso ai punti nel contorno
-			cv::Point& pt_a = contour[idx_a];
-			cv::Point& pt_b = contour[idx_b];
-
-			if (!(pt_a.x + PIXEL_TOLERANCE > image.cols || pt_b.x - PIXEL_TOLERANCE < 0 ||
-			pt_a.y + PIXEL_TOLERANCE > image.rows || pt_b.y - PIXEL_TOLERANCE < 0))
-			{
-				pt_a.x = pt_a.x + PIXEL_TOLERANCE;
-				pt_a.y = pt_a.y + PIXEL_TOLERANCE;
-				pt_b.y = pt_b.y - PIXEL_TOLERANCE;
-				pt_b.x = pt_b.x - PIXEL_TOLERANCE;
-			
-			}
-			
-
-			// Costruisci i punti top_right e bottom_left "incrociando" coordinate
-			cv::Point top_right(pt_b.x, pt_a.y);
-			cv::Point bottom_left(pt_a.x, pt_b.y);
-
-			// Crea un quadrilatero con questi 4 punti
-			std::vector<cv::Point> quad = { pt_b, top_right, pt_a, bottom_left };
-
-			temp_cards.push_back(quad);
-		}
-
-
-	}
-
-
-
-		//cv::imshow("Ordine Punti - Gradiente Rosso", debug_image);
-		//cv::waitKey(0);
-
-
-		// Mostra risultato
-		//cv::imshow("Contorni + Linee", drawing);
-		//cv::waitKey(0);
-
-	return temp_cards;
 }
 
 
