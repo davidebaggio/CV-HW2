@@ -353,7 +353,7 @@ cv::Mat extract_rank_patch(const cv::Mat& gray) {
 
     // Binarizzazione finale con soglia fissa 120
     cv::Mat final_bin;
-    cv::threshold(bw, final_bin, 120, 255, cv::THRESH_BINARY);
+    cv::threshold(bw, final_bin, 200, 255, cv::THRESH_BINARY);
 
     cv::imshow("Patch mascherato (bw)", final_bin);
     //cv::waitKey(0);
@@ -363,7 +363,7 @@ cv::Mat extract_rank_patch(const cv::Mat& gray) {
 
 cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     
-    const cv::Size baseWindow(80, 120);
+    const cv::Size baseWindow(70, 90);
     const double scale = 1.2;
     cv::Size winSize(cvRound(baseWindow.width * scale), cvRound(baseWindow.height * scale));
 

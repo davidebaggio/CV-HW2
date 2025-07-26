@@ -31,30 +31,47 @@ void invert_pixel(cv::Mat &src, cv::Mat &dst)
 		}
 	}
 }
-
 void preprocessing_light(cv::Mat &image)
 {
-	if (image.empty())
-	{
-		std::cout << "Image is empty" << std::endl;
-		return;
-	}
-	// remove blue and green background of table
-	for (size_t i = 220; i > 40; i -= 5)
-	{
-		set_pixel_zero(image, image, 0, i);
-		set_pixel_zero(image, image, 1, i);
-		//  set_pixel_zero(image, image, 2, i);
-	}
+    if (image.empty())
+    {
+        std::cout << "Image is empty" << std::endl;
+        return;
+    }
 
+    // Rimuovi sfondo blu/verde
+    for (size_t i = 220; i > 40; i -= 5)
+    {
+        set_pixel_zero(image, image, 0, i);
+        set_pixel_zero(image, image, 1, i);
+        // set_pixel_zero(image, image, 2, i);
+    }
 
-	cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-	cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0.0f, 0.25f / 3.0f, 0.0f, 0.25 / 3.0f, 2 / 3.0f, 0.25 / 3.0f, 0.0f, 0.25 / 3.0f, 0);
-	cv::filter2D(image, image, image.depth(), smooth);
-	cv::equalizeHist(image, image);
-	cv::threshold(image, image, 110, 255, cv::THRESH_BINARY);
-	cv::filter2D(image, image, image.depth(), smooth);
-	cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
+    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+
+    // Leggera sfocatura (kernel 3x3)
+    cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0, 0.25 / 3, 0,
+                                               0.25 / 3, 2.0 / 3, 0.25 / 3,
+                                               0, 0.25 / 3, 0);
+    cv::filter2D(image, image, image.depth(), smooth);
+
+    // Equalizzazione adattiva del contrasto
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
+    clahe->apply(image, image);
+
+    // Soglia adattiva (meglio in presenza di illuminazione disomogenea)
+    cv::adaptiveThreshold(image, image, 255,
+                          cv::ADAPTIVE_THRESH_GAUSSIAN_C,
+                          cv::THRESH_BINARY,
+                          11, 8);
+
+    // Ulteriore filtro di smoothing (opzionale)
+    cv::filter2D(image, image, image.depth(), smooth);
+
+    // Esempio di kernel morfologico (non usato qui)
+    // cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0,
+    //                                            1, 1, 1,
+    //                                            0, 1, 0);
 }
 
 void preprocessing_strong(cv::Mat &image)
@@ -94,7 +111,7 @@ void preprocessing_strong(cv::Mat &image)
 	kernel = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(11, 11));
 	cv::erode(image, image, kernel); 
 
-	cv::imshow("Processed Image", image);
+	//cv::imshow("Processed Image", image);
 	//cv::waitKey(0);
 
 }

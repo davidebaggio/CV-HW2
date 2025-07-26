@@ -42,11 +42,14 @@ int main(int argc, char **argv)
 			std::cout << "End of video or cannot read frame\n";
 			break;
 		}
+
+		/*
 		if (frameCount < 1000)
 		{
 			frameCount++;
 			continue;
 		}
+		*/
 
 		cv::Mat full_frame = frame.clone(); // salva frame completo per disegno e salvataggio
 
@@ -59,7 +62,7 @@ int main(int argc, char **argv)
 		cv::Rect roiRect(x - w, y - h, 2 * w, 2 * h);
 		cv::Mat roi = frame(roiRect);
 
-		if (frameCount % 2 == 0)
+		if (frameCount % 5 == 0)
 		{
 			s_pp = roi.clone();
 			l_pp = roi.clone();
@@ -88,7 +91,7 @@ int main(int argc, char **argv)
 				int blackPixels = totalPixels - cv::countNonZero(rank_patch);
 				double blackRatio = static_cast<double>(blackPixels) / totalPixels;
 
-				if (blackRatio > 0.25 || blackPixels == 0)
+				if (blackRatio > 0.4 || blackPixels == 0)
 					continue;
 
 				std::string txt = recognize_cards(rank_patch);
