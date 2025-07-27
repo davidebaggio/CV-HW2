@@ -31,20 +31,13 @@ void invert_pixel(cv::Mat &src, cv::Mat &dst)
 		}
 	}
 }
+
 void preprocessing_light(cv::Mat &image)
 {
     if (image.empty())
     {
         std::cout << "Image is empty" << std::endl;
         return;
-    }
-
-    // Rimuovi sfondo blu/verde
-    for (size_t i = 220; i > 40; i -= 5)
-    {
-        set_pixel_zero(image, image, 0, i);
-        set_pixel_zero(image, image, 1, i);
-        // set_pixel_zero(image, image, 2, i);
     }
 
     cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
@@ -65,13 +58,9 @@ void preprocessing_light(cv::Mat &image)
                           cv::THRESH_BINARY,
                           11, 8);
 
-    // Ulteriore filtro di smoothing (opzionale)
-    cv::filter2D(image, image, image.depth(), smooth);
 
-    // Esempio di kernel morfologico (non usato qui)
-    // cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0,
-    //                                            1, 1, 1,
-    //                                            0, 1, 0);
+	//cv::imshow("Processed Image", image);
+	//cv::waitKey(0);
 }
 
 void preprocessing_strong(cv::Mat &image)

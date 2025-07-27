@@ -282,7 +282,7 @@ std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray,
 
 		// Visualizza patch mascherato (opzionale)
 		cv::imshow("Patch mascherato (bw)", bw);
-		cv::waitKey(0);
+		//cv::waitKey(0);
 
 		// Matching su patch mascherato
 		auto [rankLabel, rankScore] = best_template_match(bw, rankTemplate, rankThresh);
@@ -453,8 +453,8 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
 
     cv::threshold(result, result, 234, 255, cv::THRESH_BINARY);
 
-    cv::imshow("Patch centrato", result);
-    // cv::waitKey(0);
+    //cv::imshow("Patch centrato", result);
+    //cv::waitKey(0);
 
     return result;
 }	

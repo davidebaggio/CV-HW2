@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
 	cv::Mat frame;
 	int frameCount = 0;
-	cv::Mat s_pp, l_pp;
+	cv::Mat s_pp;
 	std::vector<std::vector<cv::Point>> rects, validRects;
 	std::vector<std::string> validTexts;
 	std::vector<cv::Mat> all_frames;
@@ -43,13 +43,13 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		/*
-		if (frameCount < 1000)
+		
+		if (frameCount < 1250)
 		{
 			frameCount++;
 			continue;
 		}
-		*/
+		
 
 		cv::Mat full_frame = frame.clone(); // salva frame completo per disegno e salvataggio
 
@@ -65,17 +65,15 @@ int main(int argc, char **argv)
 		if (frameCount % 5 == 0)
 		{
 			s_pp = roi.clone();
-			l_pp = roi.clone();
 
 			preprocessing_strong(s_pp);
-			preprocessing_light(l_pp);
 			rects = process(s_pp);
 
 			cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8U);
 			fillPoly(mask, rects, cv::Scalar(255));
 
 			cv::Mat result;
-			l_pp.copyTo(result, mask);
+			roi.copyTo(result, mask);
 			sharpen_image(result);
 
 			std::vector<cv::Mat> cards = get_cards(result, rects);

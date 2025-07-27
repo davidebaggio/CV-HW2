@@ -271,8 +271,30 @@ std::vector<cv::Mat> get_cards(const cv::Mat &src, const std::vector<std::vector
 		cv::Mat card = warp_to_rect(src, rect, card_size);
 		cv::Mat rot_matrix = cv::getRotationMatrix2D(cv::Point2f(card.cols / 2, card.rows / 2), 180, 1);
 		cv::warpAffine(card, card, rot_matrix, cv::Size(card.cols, card.rows));
-		//cv::imshow("warped", card);
+
+ 	
+		cv::cvtColor(card, card, cv::COLOR_BGR2GRAY);
+
+		// 3. CLAHE per migliorare il contrasto
+		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
+		clahe->apply(card, card);
+
+		// 4. Sharpening
+		cv::Mat kernel = (cv::Mat_<float>(3,3) << 
+			0, -1, 0,
+			-1,  5, -1,
+			0, -1, 0);
+		cv::filter2D(card, card, -1, kernel);
+
+		// 5. Riduzione del rumore
+		cv::GaussianBlur(card, card, cv::Size(3, 3), 0);
+
+		// 6. Binarizzazione (ottima per OCR)
+		cv::threshold(card, card, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+		cv::imshow("warped", card);
 		//cv::waitKey(0);
+
 		// cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
 		// cv::dilate(card, card, kernel);
 		cards.push_back(card);
