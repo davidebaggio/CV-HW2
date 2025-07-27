@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 		{
 			s_pp = roi.clone();
 
-			preprocessing_strong(s_pp);
+			preprocessing_image(s_pp);
 			rects = process(s_pp);
 
 			cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8U);

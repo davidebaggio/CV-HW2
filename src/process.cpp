@@ -270,7 +270,7 @@ std::vector<cv::Mat> get_cards(const cv::Mat &src, const std::vector<std::vector
 		cv::Mat rot_matrix = cv::getRotationMatrix2D(cv::Point2f(card.cols / 2, card.rows / 2), 180, 1);
 		cv::warpAffine(card, card, rot_matrix, cv::Size(card.cols, card.rows));
 
-		preprocess_card(card);
+		preprocessing_card(card);
 		
 		cards.push_back(card);
 	}
