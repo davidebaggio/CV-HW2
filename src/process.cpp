@@ -1,4 +1,22 @@
 #include "process.hpp"
+#include "preprocess.hpp"
+
+
+std::vector<std::vector<cv::Point>> filter_contours(const std::vector<std::vector<cv::Point>>& contours, double min_area, double min_perimeter)
+{
+	std::vector<std::vector<cv::Point>> filtered;
+	for (const auto& contour : contours)
+	{
+		double area = cv::contourArea(contour);
+		double peri = cv::arcLength(contour, true);
+
+		if (area >= min_area && peri >= min_perimeter)
+		{
+			filtered.push_back(contour);
+		}
+	}
+	return filtered;
+}
 
 std::vector<cv::Point> find_closest_to_corners(const std::vector<cv::Point> &card, const cv::Size &img_size)
 {
@@ -33,13 +51,8 @@ void reorder_contour_with_bottom_left_first(std::vector<cv::Point> &contour, con
 {
     auto it = std::find(contour.begin(), contour.end(), bottom_left);
     if (it != contour.end())
-    {
         std::rotate(contour.begin(), it, contour.end());
-    }
-    else
-    {
-        //std::cerr << "Errore: punto bottom_left non trovato nel contorno." << std::endl;
-    }
+    
 }
 
 
@@ -92,23 +105,8 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
     return pairs;
 }
 
-std::vector<std::vector<cv::Point>> filter_contours(const std::vector<std::vector<cv::Point>>& contours, double min_area, double min_perimeter)
-{
-	std::vector<std::vector<cv::Point>> filtered;
-	for (const auto& contour : contours)
-	{
-		double area = cv::contourArea(contour);
-		double peri = cv::arcLength(contour, true);
 
-		if (area >= min_area && peri >= min_perimeter)
-		{
-			filtered.push_back(contour);
-		}
-	}
-	return filtered;
-}
-
-std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts, const cv::Size& image_size)
+std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts)
 {
 	std::vector<std::vector<cv::Point>> corner_pts;
 	cv::Point bl, br, tr, tl;
@@ -147,8 +145,8 @@ std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<
 
 		if (paired_indices.size() == 1)
 		{
-			br = cv::Point(card[paired_indices[0].first].x + PIXEL_TOLERANCE, card[paired_indices[0].first].y + PIXEL_TOLERANCE);
-			tl = cv::Point(card[paired_indices[0].second].x - PIXEL_TOLERANCE, card[paired_indices[0].second].y - PIXEL_TOLERANCE);
+			br = card[paired_indices[0].first];
+			tl = card[paired_indices[0].second];
 			corner_pts.push_back({ bl, br, tr, tl });
 		}
 		else if (paired_indices.size() > 1)
@@ -204,7 +202,7 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 		reorder_contour_with_bottom_left_first(card, corners[0]);
 	}
 	
-	return extract_points_from_pairs(cards, ext_points, image.size());
+	return extract_points_from_pairs(cards, ext_points);
 
 }
 
@@ -272,33 +270,11 @@ std::vector<cv::Mat> get_cards(const cv::Mat &src, const std::vector<std::vector
 		cv::Mat rot_matrix = cv::getRotationMatrix2D(cv::Point2f(card.cols / 2, card.rows / 2), 180, 1);
 		cv::warpAffine(card, card, rot_matrix, cv::Size(card.cols, card.rows));
 
- 	
-		cv::cvtColor(card, card, cv::COLOR_BGR2GRAY);
-
-		// 3. CLAHE per migliorare il contrasto
-		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
-		clahe->apply(card, card);
-
-		// 4. Sharpening
-		cv::Mat kernel = (cv::Mat_<float>(3,3) << 
-			0, -1, 0,
-			-1,  5, -1,
-			0, -1, 0);
-		cv::filter2D(card, card, -1, kernel);
-
-		// 5. Riduzione del rumore
-		cv::GaussianBlur(card, card, cv::Size(3, 3), 0);
-
-		// 6. Binarizzazione (ottima per OCR)
-		cv::threshold(card, card, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-
-		cv::imshow("warped", card);
-		//cv::waitKey(0);
-
-		// cv::Mat kernel = (cv::Mat_<uchar>(3, 3) << 0, 1, 0, 1, 1, 1, 0, 1, 0);
-		// cv::dilate(card, card, kernel);
+		preprocess_card(card);
+		
 		cards.push_back(card);
 	}
+
 	return cards;
 }
 

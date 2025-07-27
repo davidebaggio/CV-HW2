@@ -1,38 +1,6 @@
 #include "preprocess.hpp"
 
-void set_pixel_zero(cv::Mat &src, cv::Mat &dst, size_t col, int threshold)
-{
-	cv::Mat gray;
-	cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
-	if (col > 2)
-	{
-		return;
-	}
-	for (size_t i = 0; i < src.rows; i++)
-	{
-		for (size_t j = 0; j < src.cols; j++)
-		{
-			if (src.at<cv::Vec3b>(i, j)[col] > threshold && gray.at<uchar>(i, j) < threshold)
-				dst.at<cv::Vec3b>(i, j) = 0;
-			else
-				dst.at<cv::Vec3b>(i, j) = src.at<cv::Vec3b>(i, j);
-		}
-	}
-}
-
-void invert_pixel(cv::Mat &src, cv::Mat &dst)
-{
-	dst = cv::Mat::zeros(src.size(), src.type());
-	for (size_t i = 0; i < src.rows; i++)
-	{
-		for (size_t j = 0; j < src.cols; j++)
-		{
-			dst.at<uchar>(i, j) = 255 - src.at<uchar>(i, j);
-		}
-	}
-}
-
-void preprocessing_light(cv::Mat &image)
+void preprocessing_card(cv::Mat &image)
 {
     if (image.empty())
     {
@@ -40,30 +8,30 @@ void preprocessing_light(cv::Mat &image)
         return;
     }
 
-    cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+		cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
 
-    // Leggera sfocatura (kernel 3x3)
-    cv::Mat smooth = (cv::Mat_<float>(3, 3) << 0, 0.25 / 3, 0,
-                                               0.25 / 3, 2.0 / 3, 0.25 / 3,
-                                               0, 0.25 / 3, 0);
-    cv::filter2D(image, image, image.depth(), smooth);
+		// 3. CLAHE per migliorare il contrasto
+		cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
+		clahe->apply(image, image);
 
-    // Equalizzazione adattiva del contrasto
-    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(2.0, cv::Size(8, 8));
-    clahe->apply(image, image);
+		// 4. Sharpening
+		cv::Mat kernel = (cv::Mat_<float>(3,3) << 
+			0, -1, 0,
+			-1,  5, -1,
+			0, -1, 0);
+		cv::filter2D(image, image, -1, kernel);
 
-    // Soglia adattiva (meglio in presenza di illuminazione disomogenea)
-    cv::adaptiveThreshold(image, image, 255,
-                          cv::ADAPTIVE_THRESH_GAUSSIAN_C,
-                          cv::THRESH_BINARY,
-                          11, 8);
+		// 5. Riduzione del rumore
+		cv::GaussianBlur(image, image, cv::Size(3, 3), 0);
 
+		// 6. Binarizzazione (ottima per OCR)
+		cv::threshold(image, image, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-	//cv::imshow("Processed Image", image);
-	//cv::waitKey(0);
+		//cv::imshow("warped", card);
+		//cv::waitKey(0);
 }
 
-void preprocessing_strong(cv::Mat &image)
+void preprocessing_image(cv::Mat &image)
 {
 	if (image.empty())
 	{
