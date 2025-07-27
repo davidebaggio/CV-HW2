@@ -15,22 +15,34 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	// std::unordered_map<std::string, cv::Mat> rankDesc;
-	// build_catalogue_sift(rankDesc);
-	// std::unordered_map<std::string, cv::Mat> rankTemp;
-	// build_catalogue_tm(rankTemp);
-
 	double fps = cap.get(cv::CAP_PROP_FPS);
 	int width = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
 	int height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
 	std::cout << "Opened " << inputPath << " (" << width << "x" << height << " @ " << fps << " FPS)\n";
+
+	cv::VideoWriter writer;
+	cv::Size frameSize(width, height);
+	bool isColor = true;
+
+	writer.open(
+		"output.mp4",
+		cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
+		fps,
+		frameSize,
+		isColor
+	);
+
+	if (!writer.isOpened())
+	{
+		std::cerr << "Could not open the output video for write\n";
+		return -1;
+	}
 
 	cv::Mat frame;
 	int frameCount = 0;
 	cv::Mat s_pp;
 	std::vector<std::vector<cv::Point>> rects, validRects;
 	std::vector<std::string> validTexts;
-	std::vector<cv::Mat> all_frames;
 
 	static std::vector<std::vector<cv::Point>> lastValidRects;
 	static std::vector<std::string> lastValidTexts;
@@ -43,22 +55,21 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		
+		/*
 		if (frameCount < 1250)
 		{
 			frameCount++;
 			continue;
 		}
-		
+			*/
 
-		cv::Mat full_frame = frame.clone(); // salva frame completo per disegno e salvataggio
+		cv::Mat full_frame = frame.clone();
 
 		int y = frame.rows / 2;
 		int x = frame.cols / 2;
 		int h = int(0.6 * y);
 		int w = int(0.7 * x);
 
-		// estrai ROI centrale
 		cv::Rect roiRect(x - w, y - h, 2 * w, 2 * h);
 		cv::Mat roi = frame(roiRect);
 
@@ -93,11 +104,9 @@ int main(int argc, char **argv)
 					continue;
 
 				std::string txt = recognize_cards(rank_patch);
-				// std::string txt = recognize_card_sift(rank_patch, rankDesc);
 
-				// trasla i punti della ROI per adattarli al full_frame
 				std::vector<cv::Point> translated;
-				for (const auto& pt : rects[i])
+				for (const auto &pt : rects[i])
 					translated.emplace_back(pt.x + roiRect.x, pt.y + roiRect.y);
 
 				validRects.push_back(translated);
@@ -108,7 +117,6 @@ int main(int argc, char **argv)
 			lastValidTexts = validTexts;
 		}
 
-		// disegna i risultati sulla versione completa del frame
 		cv::drawContours(full_frame, lastValidRects, -1, cv::Scalar(255, 0, 0));
 		for (size_t i = 0; i < lastValidRects.size(); ++i)
 		{
@@ -116,7 +124,7 @@ int main(int argc, char **argv)
 		}
 
 		cv::imshow("Original", full_frame);
-		all_frames.push_back(full_frame);
+		writer.write(full_frame); // ✅ Salva subito, non accumulare in RAM
 
 		char key = static_cast<char>(cv::waitKey(1));
 		if (key == 27)
@@ -127,30 +135,9 @@ int main(int argc, char **argv)
 		frameCount++;
 	}
 
-	cv::Size frameSize = all_frames[0].size();
-	bool isColor = (all_frames[0].channels() == 3);
-
-	cv::VideoWriter writer;
-	writer.open(
-		"output.mp4",
-		cv::VideoWriter::fourcc('m', 'p', '4', 'v'),
-		fps,
-		frameSize,
-		isColor
-	);
-	if (!writer.isOpened())
-	{
-		std::cerr << "Could not open the output video for write\n";
-		return -1;
-	}
-
-	for (const cv::Mat &frame : all_frames)
-	{
-		writer.write(frame);
-	}
 	writer.release();
-	std::cout << "Saved output.mp4 (" << all_frames.size() << " frames at " << fps << " FPS)\n";
 	cap.release();
 	cv::destroyAllWindows();
+	std::cout << "Saved output.mp4\n";
 	return 0;
 }
