@@ -30,5 +30,6 @@ torch::jit::script::Module load_card_model(const std::string& model_path);
 std::string recognize_cards(const cv::Mat &value);
 cv::Mat extract_rank_patch(const cv::Mat& gray);
 cv::Mat extract_rank_patch_center_based(const cv::Mat& gray);
+cv::Mat addWhiteColumnsLeft(const cv::Mat& img, int whiteCols);
 
 #endif // DETECT_HPP
