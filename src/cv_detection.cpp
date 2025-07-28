@@ -1,13 +1,36 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <unordered_map>
 #include "preprocess.hpp"
 #include "process.hpp"
 #include "detect.hpp"
 
+int getHiLoValue(const std::string &cardValue)
+{
+	static const std::unordered_map<std::string, int> countMap = {
+		{"2", 1}, {"3", 1}, {"4", 1}, {"5", 1}, {"6", 1},
+		{"7", 0}, {"8", 0}, {"9", 0},
+		{"10", -1}, {"J", -1}, {"Q", -1}, {"K", -1}, {"A", -1}
+	};
+
+	auto it = countMap.find(cardValue);
+	return (it != countMap.end()) ? it->second : 0;
+}
+
+cv::Scalar getColorForValue(int value)
+{
+	if (value > 0)
+		return cv::Scalar(0, 180, 0);     // green
+	else if (value < 0)
+		return cv::Scalar(0, 40, 255);     // red
+	else
+		return cv::Scalar(220, 220, 220);  // gray
+}
+
 int main(int argc, char **argv)
 {
-	std::string inputPath = (argc > 1 ? argv[1] : "your_video.mp4");
+	std::string inputPath = (argc > 1 ? argv[1] : "input_video.mp4");
 	cv::VideoCapture cap(inputPath);
 	if (!cap.isOpened())
 	{
@@ -55,25 +78,17 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		/*
-		if (frameCount < 1250)
-		{
-			frameCount++;
-			continue;
-		}
-			*/
-
 		cv::Mat full_frame = frame.clone();
 
 		int y = frame.rows / 2;
 		int x = frame.cols / 2;
 		int h = int(0.6 * y);
-		int w = int(0.7 * x);
+		int w = int(0.9 * x);
 
 		cv::Rect roiRect(x - w, y - h, 2 * w, 2 * h);
 		cv::Mat roi = frame(roiRect);
 
-		if (frameCount % 5 == 0)
+		if (frameCount % 2 == 0)
 		{
 			s_pp = roi.clone();
 
@@ -100,7 +115,7 @@ int main(int argc, char **argv)
 				int blackPixels = totalPixels - cv::countNonZero(rank_patch);
 				double blackRatio = static_cast<double>(blackPixels) / totalPixels;
 
-				if (blackRatio > 0.4 || blackPixels == 0)
+				if (blackRatio > 0.4 || blackPixels < 500)
 					continue;
 
 				std::string txt = recognize_cards(rank_patch);
@@ -117,14 +132,39 @@ int main(int argc, char **argv)
 			lastValidTexts = validTexts;
 		}
 
-		cv::drawContours(full_frame, lastValidRects, -1, cv::Scalar(255, 0, 0));
 		for (size_t i = 0; i < lastValidRects.size(); ++i)
 		{
-			putText(full_frame, lastValidTexts[i], lastValidRects[i][0], cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 0, 0), 2);
+			int hiLoVal = getHiLoValue(lastValidTexts[i]);
+			cv::Scalar color = getColorForValue(hiLoVal);
+
+
+			cv::Mat overlay = full_frame.clone();
+			std::vector<std::vector<cv::Point>> poly{lastValidRects[i]};
+			cv::fillPoly(overlay, poly, color);
+
+			
+			double alpha = 0.3;
+			cv::addWeighted(overlay, alpha, full_frame, 1 - alpha, 0, full_frame);
+
+			
+			cv::drawContours(full_frame, poly, -1, color, 1);
+
+			
+			cv::Rect bbox = cv::boundingRect(lastValidRects[i]);
+
+			
+			cv::Point topLeft = bbox.tl() + cv::Point(0, 0);
+			putText(full_frame, lastValidTexts[i], topLeft, cv::FONT_HERSHEY_SIMPLEX, 0.7, color, 2);
+
+			
+			cv::Point bottomRight = bbox.br() - cv::Point(-5, 10);
+			std::string hiloStr = (hiLoVal > 0 ? "+" : "") + std::to_string(hiLoVal);
+			putText(full_frame, hiloStr, bottomRight, cv::FONT_HERSHEY_SIMPLEX, 0.6, color, 2);
+
 		}
 
 		cv::imshow("Original", full_frame);
-		writer.write(full_frame); // ✅ Salva subito, non accumulare in RAM
+		writer.write(full_frame);
 
 		char key = static_cast<char>(cv::waitKey(1));
 		if (key == 27)
