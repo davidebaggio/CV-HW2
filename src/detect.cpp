@@ -44,7 +44,7 @@ std::string recognize_cards(const cv::Mat& rank_patch) {
 
 cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     
-    const cv::Size baseWindow(70, 85);
+    const cv::Size baseWindow(70, 103);
     const double scale = 1.2;
     cv::Size winSize(cvRound(baseWindow.width * scale), cvRound(baseWindow.height * scale));
 
@@ -134,7 +134,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
 
     cv::threshold(result, result, 234, 255, cv::THRESH_BINARY);
 
-    cv::imshow("Patch centrato", result);
+    //cv::imshow("Patch centrato", result);
     //cv::waitKey(0);
 
 
@@ -142,6 +142,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     result = addWhiteColumnsLeft(result, whiteCols);
 
     cv::imshow("Patch centrato con colonne bianche", result);
+    //cv::waitKey(0);
 
     return result;
 }	
