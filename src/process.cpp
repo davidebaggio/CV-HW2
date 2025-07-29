@@ -136,10 +136,8 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
 
     // Ensure the number of indices is even to form symmetric pairs
     if (indices.size() % 2 != 0)
-    {
-        std::cerr << "Errore: numero dispari di massimi locali (" << indices.size() << ")" << std::endl;
         return pairs;
-    }
+    
 
     int n = indices.size();
 
@@ -191,9 +189,7 @@ std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<
         
         // Pair the local maxima indices symmetrically from start and end
         paired_indices = pair_indices_symmetric(max_indices);
-        
-        std::cout << "Card " << i << ": " << paired_indices.size() << " coppie di estremi trovate." << std::endl;
-        
+                
         // Case 1: Only one pair of extrema found - likely a single quadrilateral block
         if (paired_indices.size() == 1)
         {
