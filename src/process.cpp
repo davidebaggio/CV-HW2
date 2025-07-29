@@ -270,7 +270,7 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image)
 
     // Extract and refine corner points from the card contours and their external corners
     // Returns a vector of corner sets representing quadrilateral shapes of cards
-    return extract_points_from_pairs(cards, ext_points, image.size());
+    return extract_points_from_pairs(cards, ext_points);
 }
 
 
@@ -359,7 +359,7 @@ std::vector<cv::Mat> get_cards(const cv::Mat &src, const std::vector<std::vector
         preprocessing_card(card);
 
 
-        cv::imshow("warped", card);
+        //cv::imshow("warped", card);
         //cv::waitKey(0);
 
         cards.push_back(card);
