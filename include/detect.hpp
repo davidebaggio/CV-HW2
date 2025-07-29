@@ -2,34 +2,57 @@
 #define DETECT_HPP
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/features2d.hpp>
 #include <torch/script.h>
+#include <torch/torch.h>
+#include <iostream>
 
-
-
-struct card_corner
-{
-	cv::Rect window;
-	std::string rank;
-	double rankScore;
-};
-
-static float IoU(const cv::Rect &a, const cv::Rect &b);
-std::vector<card_corner> non_max_suppression(std::vector<card_corner> &dets, float iouThresh = 0.3f);
-
-void build_catalogue_sift(std::unordered_map<std::string, cv::Mat> &rankDesc);
-void build_catalogue_tm(std::unordered_map<std::string, cv::Mat> &rankTemplate);
-
-std::pair<std::string, int> detect_best(const cv::Mat &queryDesc, const std::unordered_map<std::string, cv::Mat> &catalog, cv::Ptr<cv::DescriptorMatcher> &matcher, float ratioThresh = 0.7f);
-std::pair<std::string, double> best_template_match(const cv::Mat &patch, const std::unordered_map<std::string, cv::Mat> &templates, double thresh = 0.6);
-
-std::string detect_card_sift(const cv::Mat &queryImg, std::unordered_map<std::string, cv::Mat> &rankDesc, int &rankScore, std::vector<cv::KeyPoint> &outQueryKpts);
-std::vector<card_corner> detect_with_sliding_window(const cv::Mat &gray, std::unordered_map<std::string, cv::Mat> &rankTemplate, std::vector<double> scales = {1.0 /* , 0.8, 0.6 */}, cv::Size baseWindow = cv::Size(70, 125), int stride = 40, double rankThresh = 0.97);
-std::vector<card_corner> detect_with_tl_window(const cv::Mat &gray, std::unordered_map<std::string, cv::Mat> &rankTemplate, std::vector<double> scales = {1.0}, cv::Size baseWindow = cv::Size(85, 115), double rankThresh = 0.97);
+/**
+ * @brief Loads a TorchScript model from file and sets it to evaluation mode.
+ *
+ * This function is responsible for loading a pre-trained card classifier model
+ * in TorchScript format. If the model fails to load, the function throws an error.
+ *
+ * @param model_path Path to the `.pt` TorchScript model file.
+ * @return Loaded TorchScript model ready for inference.
+ */
 torch::jit::script::Module load_card_model(const std::string& model_path);
+
+/**
+ * @brief Classifies a rank patch using a deep learning model.
+ *
+ * The input image is resized and normalized before being passed to the model.
+ * The predicted class index is mapped to its corresponding rank label.
+ *
+ * @param value Grayscale image patch of the card rank area (assumed 1-channel).
+ * @return Predicted rank label (e.g., "A", "10", "Q"), or "Unknown"/"Invalid" on error.
+ */
 std::string recognize_cards(const cv::Mat &value);
-cv::Mat extract_rank_patch(const cv::Mat& gray);
+
+/**
+ * @brief Extracts the rank symbol region using a center-based contour filtering method.
+ *
+ * This function assumes that the rank is located near the center of the patch and:
+ * - Applies CLAHE for contrast enhancement.
+ * - Binarizes the image to isolate foreground.
+ * - Filters contours based on proximity to center and border exclusion.
+ * - Optionally selects up to 2 central contours to build the mask.
+ * - Pads the result on the left to preserve spatial structure.
+ *
+ * @param gray Grayscale input patch (typically from top-left of a card).
+ * @return Cleaned and centered image patch of the detected rank area.
+ */
 cv::Mat extract_rank_patch_center_based(const cv::Mat& gray);
-cv::Mat addWhiteColumnsLeft(const cv::Mat& img, int whiteCols);
+
+/**
+ * @brief Adds a fixed-width white margin to the left side of the image.
+ *
+ * This is used to spatially shift the content to the right,
+ * e.g., for improving CNN alignment or avoiding edge clipping.
+ *
+ * @param img Input grayscale image.
+ * @param whiteCols Number of white columns to prepend.
+ * @return New image with white padding on the left side.
+ */
+cv::Mat add_white_columns_left(const cv::Mat& img, int whiteCols);
 
 #endif // DETECT_HPP
