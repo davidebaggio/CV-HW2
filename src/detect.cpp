@@ -141,7 +141,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     int whiteCols = 20;
     result = addWhiteColumnsLeft(result, whiteCols);
 
-    cv::imshow("Patch centrato con colonne bianche", result);
+    //cv::imshow("Patch centrato con colonne bianche", result);
     //cv::waitKey(0);
 
     return result;

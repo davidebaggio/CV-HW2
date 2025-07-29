@@ -105,7 +105,7 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
  *   `pair_indices_symmetric`, which must be defined elsewhere.
  * - Debug information is printed to `std::cout`, indicating the number of extrema pairs found per contour.
  */
-std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts, const cv::Size& image_size);
+std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts);
 
 /**
  * @brief Detects and extracts quadrilateral regions (e.g., cards) from a binary image.
