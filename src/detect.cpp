@@ -148,7 +148,7 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray) {
     int whiteCols = 20;
     result = add_white_columns_left(result, whiteCols);
 
-    cv:imshow("Extracted Rank Patch", result);
+    //cv:imshow("Extracted Rank Patch", result);
 
     return result;
 }
