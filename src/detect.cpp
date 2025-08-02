@@ -1,3 +1,5 @@
+// Zoren Martinez 2123873
+
 #include "detect.hpp"
 
 static torch::jit::script::Module card_model = load_card_model("simple_card_classifier_traced.pt");

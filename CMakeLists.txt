@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(counting_cards)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libtorch") 
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/libtorch")
+#set(CMAKE_BUILD_TYPE Debug)
 
 find_package(Torch REQUIRED)
 find_package(OpenCV REQUIRED)

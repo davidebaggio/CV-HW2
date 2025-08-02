@@ -1,3 +1,5 @@
+// Francesco Pivotto 2158296
+
 #include "preprocess.hpp"
 
 void preprocessing_card(cv::Mat &image)

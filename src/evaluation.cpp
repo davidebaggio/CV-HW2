@@ -1,3 +1,5 @@
+// Davide Baggio 2122547
+
 #include "evaluation.hpp"
 
 double compute_iou(const std::vector<cv::Point> &pred, const std::vector<cv::Point> &gt)

@@ -1,3 +1,4 @@
+// Davide Baggio 2122547
 
 #include "preprocess.hpp"
 #include "process.hpp"
@@ -49,7 +50,7 @@ int main(int argc, char **argv)
     static std::vector<std::string> last_valid_texts;
 
     std::map<std::string, std::vector<std::pair<std::vector<cv::Point>, std::string>>> predictions;
-
+    cv::namedWindow("Original", cv::WINDOW_NORMAL);
     // Main processing loop
     while (true)
     {
@@ -151,7 +152,8 @@ int main(int argc, char **argv)
         frame_count++;
     }
 
-    evaluate_predictions("instances_default.json", predictions);
+    if (argc <= 1)
+        evaluate_predictions("instances_default.json", predictions);
     writer.release();
     cap.release();
     cv::destroyAllWindows();

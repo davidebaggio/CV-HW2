@@ -1,8 +1,9 @@
+// Francesco Pivotto 2158296
+
 #ifndef PREPROCESS_HPP
 #define PREPROCESS_HPP
 
 #include <opencv2/opencv.hpp>
-
 
 /**
  * @brief Enhances a card image to make text and edges more legible for OCR.
@@ -15,7 +16,6 @@
  * Must be a valid BGR image initially. After processing, it becomes grayscale binary.
  */
 void preprocessing_card(cv::Mat &image);
-
 
 /**
  * @brief Isolates bright, low-saturation regions (e.g. light beige or white areas)

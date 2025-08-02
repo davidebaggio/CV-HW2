@@ -1,3 +1,5 @@
+// Zoren Martinez 2123873
+
 #ifndef DETECT_HPP
 #define DETECT_HPP
 
@@ -15,7 +17,7 @@
  * @param model_path Path to the `.pt` TorchScript model file.
  * @return Loaded TorchScript model ready for inference.
  */
-torch::jit::script::Module load_card_model(const std::string& model_path);
+torch::jit::script::Module load_card_model(const std::string &model_path);
 
 /**
  * @brief Classifies a rank patch using a deep learning model.
@@ -41,7 +43,7 @@ std::string recognize_cards(const cv::Mat &value);
  * @param gray Grayscale input patch (typically from top-left of a card).
  * @return Cleaned and centered image patch of the detected rank area.
  */
-cv::Mat extract_rank_patch_center_based(const cv::Mat& gray);
+cv::Mat extract_rank_patch_center_based(const cv::Mat &gray);
 
 /**
  * @brief Adds a fixed-width white margin to the left side of the image.
@@ -53,6 +55,6 @@ cv::Mat extract_rank_patch_center_based(const cv::Mat& gray);
  * @param whiteCols Number of white columns to prepend.
  * @return New image with white padding on the left side.
  */
-cv::Mat add_white_columns_left(const cv::Mat& img, int whiteCols);
+cv::Mat add_white_columns_left(const cv::Mat &img, int whiteCols);
 
 #endif // DETECT_HPP
