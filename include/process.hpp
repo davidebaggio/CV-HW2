@@ -11,7 +11,7 @@
  * @param min_perimeter Minimum perimeter length to keep.
  * @return Vector of contours that satisfy both area and perimeter constraints.
  */
-std::vector<std::vector<cv::Point>> filter_contours(const std::vector<std::vector<cv::Point>>& contours, double min_area, double min_perimeter);
+std::vector<std::vector<cv::Point>> filter_contours(const std::vector<std::vector<cv::Point>> &contours, double min_area, double min_perimeter);
 
 /**
  * @brief Finds the points in the contour closest to the top-right and bottom-left
@@ -59,7 +59,7 @@ double point_line_distance(const cv::Point &p, const cv::Point &p1, const cv::Po
  * @param window_size  Half-size of the window used to compare neighboring elements.
  * @return             A vector of indices corresponding to the local maxima found.
  */
-std::vector<int> find_local_maxima(const std::vector<double>& distances, int window_size, double min_prominence = 10.0);
+std::vector<int> find_local_maxima(const std::vector<double> &distances, int window_size, double min_prominence = 10.0);
 
 /**
  * @brief Pairs indices symmetrically from the start and end of a sorted list.
@@ -73,7 +73,7 @@ std::vector<int> find_local_maxima(const std::vector<double>& distances, int win
  * @param indices A vector of integer indices to pair.
  * @return A vector of index pairs. If the input size is odd, returns an empty vector and logs an error.
  */
-std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& indices);
+std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int> &indices);
 
 /**
  * @brief Extracts corner points from contour point pairs based on external extrema.
@@ -105,7 +105,7 @@ std::vector<std::pair<int, int>> pair_indices_symmetric(const std::vector<int>& 
  *   `pair_indices_symmetric`, which must be defined elsewhere.
  * - Debug information is printed to `std::cout`, indicating the number of extrema pairs found per contour.
  */
-std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>>& cards, const std::vector<std::vector<cv::Point>>& ext_pts);
+std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<std::vector<cv::Point>> &cards, const std::vector<std::vector<cv::Point>> &ext_pts);
 
 /**
  * @brief Detects and extracts quadrilateral regions (e.g., cards) from a binary image.
@@ -135,7 +135,6 @@ std::vector<std::vector<cv::Point>> extract_points_from_pairs(const std::vector<
  */
 std::vector<std::vector<cv::Point>> process(cv::Mat &image);
 
-
 /**
  * @brief Sharpens the input image using a simple 3x3 convolution kernel.
  *
@@ -145,7 +144,6 @@ std::vector<std::vector<cv::Point>> process(cv::Mat &image);
  * @param image Input/output image that will be modified in place.
  */
 void sharpen_image(cv::Mat &image);
-
 
 /**
  * @brief Orders a set of 4 points in the sequence: top-left, top-right, bottom-right, bottom-left.
@@ -161,7 +159,6 @@ void sharpen_image(cv::Mat &image);
  */
 void sort_corners(std::vector<cv::Point2f> &pts);
 
-
 /**
  * @brief Applies a perspective transform to a quadrilateral region, warping it into a rectangle.
  *
@@ -176,7 +173,6 @@ void sort_corners(std::vector<cv::Point2f> &pts);
  * @return The warped image containing the perspective-corrected rectangle.
  */
 cv::Mat warp_to_rect(const cv::Mat &src, const std::vector<cv::Point> &quad, const cv::Size &dstSize);
-
 
 /**
  * @brief Warps and preprocesses card regions extracted from the source image.

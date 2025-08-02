@@ -16,6 +16,7 @@ set(LIB_CV
     src/preprocess.cpp
     src/process.cpp
     src/detect.cpp
+    src/evaluation.cpp
 )
 
 add_library(cv STATIC ${LIB_CV})
