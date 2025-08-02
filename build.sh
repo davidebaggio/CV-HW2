@@ -14,7 +14,7 @@ fi
 
 # Download our trained model if not already present
 if [ ! -f "simple_card_classifier_traced.pt" ]; then
-    wget --no-check-certificate "https://drive.google.com/uc?export=download&id=1jSCMt6EG0g56-9XafxIkm-zRKy2Y-9aP" -O simple_card_classifier_traced.pt
+    wget "https://github.com/davidebaggio/CV-HW2/releases/download/v1/simple_card_classifier_traced.pt" -O simple_card_classifier_traced.pt
 fi
 
 # Build the project
